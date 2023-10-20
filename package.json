@@ -1,0 +1,40 @@
+{
+  "name": "interface",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@headlessui/react": "^1.7.17",
+    "@heroicons/react": "^2.0.18",
+    "@uniswap/sdk-core": "^4.0.7",
+    "@uniswap/smart-order-router": "^3.17.1",
+    "@uniswap/v3-sdk": "^3.10.0",
+    "@web3modal/ethereum": "2.4.1",
+    "@web3modal/wagmi": "^3.1.0",
+    "html-to-image": "^1.11.11",
+    "next": "^13.4.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-hot-toast": "^2.4.1",
+    "react-qr-code": "^2.0.12",
+    "react-qr-reader": "^3.0.0-beta-1",
+    "viem": "~0.3.36",
+    "wagmi": "^1.0.6"
+  },
+  "devDependencies": {
+    "@types/node": "^17.0.31",
+    "@types/react": "^18.0.9",
+    "@types/react-dom": "^18.0.3",
+    "autoprefixer": "^10.4.16",
+    "eslint": "^8.15.0",
+    "eslint-config-next": "^12.1.6",
+    "postcss": "^8.4.31",
+    "tailwindcss": "^3.3.3",
+    "typescript": "^5.0.4"
+  }
+}
