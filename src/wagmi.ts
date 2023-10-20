@@ -1,5 +1,5 @@
 import { w3mConnectors, w3mProvider } from '@web3modal/ethereum'
-import { Chain, configureChains, createConfig } from 'wagmi'
+import { Chain, configureChains, createConfig, mainnet } from 'wagmi'
 
 export const walletConnectProjectId = '9577531e389c799d54896f39e80d7bb0'
 
@@ -28,8 +28,12 @@ export const neo = {
   },
 } as const satisfies Chain
 
-const { chains, publicClient, webSocketPublicClient } = configureChains(
-  [neo],
+const {
+  chains: [, ...chains],
+  publicClient,
+  webSocketPublicClient,
+} = configureChains(
+  [mainnet, neo],
   [w3mProvider({ projectId: walletConnectProjectId })]
 )
 
