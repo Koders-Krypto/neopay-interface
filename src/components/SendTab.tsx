@@ -98,7 +98,7 @@ function SendTab() {
 
   return (
     <>
-      {qrData ? (
+      {!qrData ? (
         <QrReader
           onResult={(result) => {
             if (result) {
