@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Web3Button } from './Web3Button'
+import ConnectButton from './ConnectButton'
 import { usePathname } from 'next/navigation'
 
 export default function Navbar() {
@@ -31,14 +31,19 @@ export default function Navbar() {
         className={`flex justify-between items-center z-50 p-3 pl-6 text-white rounded-full max-w-7xl mx-auto ${navbarBgColor}`}
       >
         <Link href="/">
-          <Image src="/neopay-logo.png" alt="neopay" height="150" width="150" />
+          <Image
+            src="/neopay-logo.png"
+            alt="neopay logo"
+            height="160"
+            width="160"
+          />
         </Link>
         {pathname === '/app' ? (
-          <Web3Button />
+          <ConnectButton />
         ) : (
           <Link
             href="/app"
-            className="md:text-lg text-white shadow-md bg-[#01AE92] px-4 md:px-6 py-2 rounded-full uppercase"
+            className="px-4 py-2 text-white uppercase rounded-full shadow-md md:text-lg bg-primary md:px-6"
           >
             Launch App
           </Link>

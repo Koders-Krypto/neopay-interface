@@ -13,3 +13,12 @@ select {
   background-position: right 0.9rem top 50%;
   background-size: 0.65rem auto;
 }
+/* .background {
+  background: rgba(39, 103, 187, 1);
+  background-color: 'linear-gradient(96.5deg,rgba(39, 103, 187, 1) 10.4%,rgba(16, 72, 144, 1) 87.7%)';
+} */
+
+.background {
+  background: url('/Overlay 300x300.png'),
+    radial-gradient(circle, rgb(1, 117, 146, 1) 10.4%, rgb(96, 99, 99) 100%);
+}

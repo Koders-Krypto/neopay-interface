@@ -10,27 +10,27 @@ import QrButtonIcon from '../assets/icons/button-qr.svg'
 export default function Page() {
   return (
     <>
-      <main className="min-h-screen flex flex-col-reverse md:flex-row items-center justify-center gap-12 md:justify-between">
-        <div className="space-y-6 self-start ml-4 md:ml-0 md:self-auto">
-          <h1 className="text-5xl md:text-7xl uppercase font-bold leading-none">
+      <main className="flex flex-col-reverse items-center justify-center min-h-screen gap-12 md:flex-row md:justify-between">
+        <div className="self-start ml-4 space-y-6 md:ml-0 md:self-auto">
+          <h1 className="text-5xl font-bold leading-none text-white uppercase md:text-7xl">
             Neopay
           </h1>
-          <h2 className="text-3xl md:text-5xl font-bold uppercase text-black leading-tight max-w-[20rem] md:max-w-2xl">
+          <h2 className="text-3xl md:text-5xl font-bold uppercase text-white leading-tight max-w-[20rem] md:max-w-2xl">
             Simply scan the{' '}
-            <span className="underline decoration-[#01AE92]">QR code</span> and
+            <span className="underline decoration-primary">QR code</span> and
             pay with{' '}
-            <span className="underline decoration-[#01AE92]">Any Token</span>
+            <span className="underline decoration-primary">Any Token</span>
           </h2>
           <div className="flex items-center gap-4 md:gap-6">
             <Link
               href="/app"
-              className="text-lg md:text-2xl text-white shadow-md bg-[#01AE92] px-4 md:px-8 py-2 rounded-full"
+              className="px-4 py-2 text-lg text-white rounded-full shadow-md md:text-2xl bg-primary md:px-8"
             >
               Launch App
             </Link>
             <Link
               href="#readmore"
-              className="text-lg md:text-2xl text-[#00E599] shadow-md border-2 border-[#01AE92] px-4 md:px-8 py-1.5 rounded-full"
+              className="text-lg md:text-2xl text-[#00E599] shadow-md border-2 border-primary px-4 md:px-8 py-1.5 rounded-full"
             >
               Read more
             </Link>
@@ -38,7 +38,7 @@ export default function Page() {
         </div>
         <Image src={HeroImage} alt="" height={500} width={500} />
       </main>
-      <section className="flex flex-col md:flex-row gap-6" id="readmore">
+      <section className="flex flex-col gap-6 md:flex-row" id="readmore">
         <Card
           image={SendIcon}
           buttonText="Send Payment"

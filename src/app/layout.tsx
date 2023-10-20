@@ -4,6 +4,11 @@ import { Providers } from './providers'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import { Metadata } from 'next'
+import { Noto_Sans } from 'next/font/google'
+const noto = Noto_Sans({
+  subsets: ['latin'],
+  weight: ['100', '200', '300', '400', '500', '600', '700', '800', '900'],
+})
 
 export const metadata: Metadata = {
   title: `Neopay - Simply Scan and Pay`,
@@ -47,16 +52,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body
-        style={{
-          background:
-            'linear-gradient(96.5deg,rgba(39, 103, 187, 1) 10.4%,rgba(16, 72, 144, 1) 87.7%)',
-        }}
-      >
+      <body className={noto.className + ' background'}>
         <Toaster position="bottom-center" reverseOrder={false} />
         <Providers>
           <Navbar />
-          <div className="max-w-7xl mx-auto px-4">{children}</div>
+          <div className="px-4 mx-auto max-w-7xl">{children}</div>
         </Providers>
         <Footer />
       </body>

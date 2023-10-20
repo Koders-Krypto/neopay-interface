@@ -57,7 +57,7 @@ export default function Page() {
             {({ selected }) => (
               <button
                 className={`flex-1 px-4 py-1.5 rounded-md shadow-md focus:outline-none flex items-center justify-center gap-2 ${
-                  selected ? 'bg-[#01AE92]' : 'bg-transparent'
+                  selected ? 'bg-primary' : 'bg-transparent'
                 }`}
               >
                 <CameraIcon
@@ -73,7 +73,7 @@ export default function Page() {
             {({ selected }) => (
               <button
                 className={`flex-1 px-4 py-1.5 rounded-md shadow-md focus:outline-none flex items-center justify-center gap-2 ${
-                  selected ? 'bg-[#01AE92]' : 'bg-transparent'
+                  selected ? 'bg-primary' : 'bg-transparent'
                 }`}
               >
                 <QrIcon

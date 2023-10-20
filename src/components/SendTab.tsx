@@ -82,7 +82,7 @@ function SendTab() {
     return (
       <div className="flex justify-center items-center h-[21rem]">
         <button
-          className="bg-[#01AE92] flex justify-center items-center gap-2 px-4 py-2.5 rounded-md shadow-sm"
+          className="bg-primary flex justify-center items-center gap-2 px-4 py-2.5 rounded-md shadow-sm"
           onClick={() => setCameraEnabled(true)}
         >
           <CheckmarkIcon
@@ -233,7 +233,7 @@ function SendTab() {
                                   </span>
                                 )}
                                 {selected && (
-                                  <CheckIcon className="h-4 w-4 text-[#01AE92]" />
+                                  <CheckIcon className="h-4 w-4 text-primary" />
                                 )}
                               </div>
                             </div>
@@ -248,7 +248,7 @@ function SendTab() {
           </div>
           <div className="mt-3 space-y-2">
             {isConnected ? (
-              <button className="w-full flex items-center justify-center gap-2 bg-[#01AE92] rounded-md shadow-sm py-2.5 text-white">
+              <button className="w-full flex items-center justify-center gap-2 bg-primary rounded-md shadow-sm py-2.5 text-white">
                 Pay
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -260,7 +260,7 @@ function SendTab() {
                 </svg>
               </button>
             ) : (
-              <button className="w-full bg-[#01AE92] rounded-md shadow-sm py-2.5 text-white">
+              <button className="w-full bg-primary rounded-md shadow-sm py-2.5 text-white">
                 Connect Wallet
               </button>
             )}
