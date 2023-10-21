@@ -9,16 +9,15 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@ethersproject/providers": "5.0.23",
     "@headlessui/react": "^1.7.17",
     "@heroicons/react": "^2.0.18",
-    "@uniswap/sdk-core": "^4.0.7",
-    "@uniswap/smart-order-router": "^3.17.1",
-    "@uniswap/v3-sdk": "^3.10.0",
     "@web3modal/ethereum": "2.4.1",
     "@web3modal/wagmi": "^3.1.0",
     "encoding": "^0.1.13",
     "html-to-image": "^1.11.11",
     "lokijs": "^1.5.12",
+    "moonbeamswap": "/Users/chaitanyajoshi/Documents/Projects/uniswap/moonbeam-uniswap/uniswap-sdk-moonbeam",
     "next": "^13.4.0",
     "pino-pretty": "^10.2.3",
     "react": "^18.2.0",

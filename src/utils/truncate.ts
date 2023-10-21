@@ -1,4 +1,4 @@
-export default function Truncate(fullStr = '', strLen = 8, middleStr = '...') {
+export default function truncate(fullStr = '', strLen = 8, middleStr = '...') {
   if (fullStr.length <= strLen) return fullStr.toString()
   const midLen = middleStr.length
   const charsToShow = strLen - midLen

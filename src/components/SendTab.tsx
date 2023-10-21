@@ -1,12 +1,32 @@
 import React, { Fragment, SVGProps, useState } from 'react'
-import toast from 'react-hot-toast'
 import { QrReader } from 'react-qr-reader'
-import { erc20ABI, useAccount, useContractReads } from 'wagmi'
+import {
+  erc20ABI,
+  useAccount,
+  useContractReads,
+  useContractWrite,
+  usePublicClient,
+} from 'wagmi'
 import { tokenList } from '../utils/tokenList'
 import { Listbox, Transition } from '@headlessui/react'
 import { CheckIcon, ChevronUpDownIcon } from '@heroicons/react/20/solid'
 import Image from 'next/image'
-import { formatUnits } from 'viem'
+import { formatUnits, parseUnits } from 'viem'
+import truncate from '../utils/truncate'
+import {
+  Fetcher,
+  Percent,
+  Route,
+  Router,
+  Token,
+  TokenAmount,
+  Trade,
+  TradeType,
+} from 'moonbeamswap'
+import { router02Abi } from '../assets/abi/router02Abi'
+import { ROUTER02_CONTRACT_ADDRESS } from '../utils/constants'
+import { useWeb3Modal } from '@web3modal/wagmi/react'
+import { waitForTransactionReceipt } from 'viem/public'
 
 const CheckmarkIcon = (props: SVGProps<SVGSVGElement>) => (
   <svg
@@ -54,29 +74,102 @@ const UserIcon = (props: SVGProps<SVGSVGElement>) => (
 )
 
 interface QrDataInterface {
-  amount: string
-  token: string
-  receiver: string
+  amount: `${number}`
+  token: Token
+  receiver: `0x${string}`
 }
 
 function SendTab() {
+  const { open } = useWeb3Modal()
   const { address, isConnected } = useAccount()
+  const publicClient = usePublicClient()
+
   const [cameraEnabled, setCameraEnabled] = useState(false)
   const [qrData, setQrData] = useState<QrDataInterface>()
-  const [token, setToken] = useState(tokenList[0])
+  const [selectedToken, setSelectedToken] = useState(tokenList[0])
 
   const { data: tokenBalances } = useContractReads({
     contracts: tokenList.map(
       (token) =>
         ({
-          address: token.address,
+          address: token.token.address as `0x${string}`,
           abi: erc20ABI,
           functionName: 'balanceOf',
           args: [address!],
         } as const)
     ),
     enabled: !!address,
+    watch: true,
   })
+
+  const { writeAsync: swapAndTransfer } = useContractWrite({
+    address: ROUTER02_CONTRACT_ADDRESS,
+    abi: router02Abi,
+    functionName: 'swapTokensForExactTokens',
+    account: address,
+  })
+
+  const { writeAsync: transfer } = useContractWrite({
+    address: selectedToken.token.address as `0x${string}`,
+    abi: erc20ABI,
+    functionName: 'transfer',
+    account: address,
+  })
+
+  const { writeAsync: approve } = useContractWrite({
+    address: selectedToken.token.address as `0x${string}`,
+    abi: erc20ABI,
+    functionName: 'approve',
+    account: address,
+  })
+
+  const handlePay = async () => {
+    if (!qrData || !address) return
+
+    const transferAmount = parseUnits(qrData.amount, qrData.token.decimals)
+
+    if (qrData.token.equals(selectedToken.token)) {
+      await transfer({
+        args: [qrData.receiver, transferAmount],
+      })
+    } else {
+      const pair = await Fetcher.fetchPairData(
+        selectedToken.token,
+        qrData.token
+      )
+      const route = new Route([pair], selectedToken.token)
+      const trade = new Trade(
+        route,
+        new TokenAmount(qrData.token, transferAmount),
+        TradeType.EXACT_OUTPUT
+      )
+
+      const swapParams = Router.swapCallParameters(trade, {
+        ttl: 50,
+        recipient: qrData.receiver,
+        allowedSlippage: new Percent('1', '100'),
+      })
+
+      const allowance = await publicClient.readContract({
+        address: selectedToken.token.address as `0x${string}`,
+        abi: erc20ABI,
+        functionName: 'allowance',
+        args: [address, ROUTER02_CONTRACT_ADDRESS],
+      })
+
+      if (allowance < transferAmount) {
+        const approveTxHash = await approve({
+          args: [ROUTER02_CONTRACT_ADDRESS, transferAmount],
+        })
+        await waitForTransactionReceipt(publicClient, {
+          hash: approveTxHash.hash,
+        })
+      }
+
+      //@ts-ignore
+      await swapAndTransfer({ args: swapParams.args })
+    }
+  }
 
   if (!cameraEnabled) {
     return (
@@ -100,11 +193,18 @@ function SendTab() {
     <>
       {!qrData ? (
         <QrReader
-          onResult={(result) => {
-            if (result) {
-              setQrData(JSON.parse(result.getText()))
-              toast.success('QR Scanned successfully')
+          onResult={(result, error) => {
+            if (!!result) {
+              const {
+                amount,
+                token: { chainId, address, decimals, symbol, name },
+                receiver,
+              } = JSON.parse(result.getText())
+              const token = new Token(chainId, address, decimals, symbol, name)
+              setQrData({ amount, token, receiver })
             }
+
+            if (!!error) return
           }}
           videoContainerStyle={{
             borderRadius: '8px',
@@ -124,7 +224,9 @@ function SendTab() {
                 stroke="currentColor"
                 className="w-6 h-6"
               />
-              Amount: <span className="block">0 {token.symbol}</span>
+              <span className="block">
+                Amount: {qrData.amount} {qrData.token.symbol}
+              </span>
             </div>
             <div className="flex items-center gap-2 font-bold">
               <UserIcon
@@ -132,32 +234,24 @@ function SendTab() {
                 stroke="currentColor"
                 className="w-6 h-6"
               />
-              Address:{' '}
-              {/* <Link
-                    className="hover:underline"
-                    target="_blank"
-                    rel="noreferrer"
-                    href={
-                      'https://evm.ngd.network/address/' + QRReader?.userAddress
-                    }
-                  >
-                    {Truncate(QRReader?.userAddress, 16, '...')}
-                  </Link> */}
+              <span className="block">
+                Address: {truncate(qrData.receiver, 14, '...')}
+              </span>
             </div>
 
             <div className="space-y-1">
               <label className="text-sm" htmlFor="token">
                 Select a Token to Pay
               </label>
-              <Listbox value={token} onChange={setToken}>
+              <Listbox value={selectedToken} onChange={setSelectedToken}>
                 <div className="relative mt-1 bg-white rounded-lg">
                   <Listbox.Button className="relative w-full cursor-default rounded-lg bg-white py-2 pl-3 pr-10 text-left shadow-md">
                     <div className="flex items-center gap-2">
                       <div className="bg-gray-200 p-1.5 rounded-full">
                         <div className="relative h-4 w-4">
                           <Image
-                            src={token.logoURI}
-                            alt={token.name}
+                            src={selectedToken.logoURI}
+                            alt={selectedToken.token.name ?? ''}
                             sizes="16px"
                             fill
                             style={{
@@ -167,7 +261,7 @@ function SendTab() {
                         </div>
                       </div>
                       <span className="block truncate text-gray-900">
-                        {token.symbol}
+                        {selectedToken.token.symbol}
                       </span>
                     </div>
                     <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
@@ -186,8 +280,8 @@ function SendTab() {
                     <Listbox.Options className="absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg focus:outline-none">
                       {tokenList.map((token, i) => (
                         <Listbox.Option
-                          key={token.address}
-                          className={({ active, selected }) =>
+                          key={token.token.address}
+                          className={({ active }) =>
                             `relative cursor-default select-none py-2 pl-3 pr-4 text-gray-900 ${
                               active ? 'bg-blue-200' : 'bg-white'
                             }`
@@ -205,7 +299,7 @@ function SendTab() {
                                   <div className="relative h-4 w-4">
                                     <Image
                                       src={token.logoURI}
-                                      alt={token.name}
+                                      alt={token.token.name ?? ''}
                                       sizes="16px"
                                       fill
                                       style={{
@@ -216,19 +310,25 @@ function SendTab() {
                                 </div>
                                 <div className="flex flex-col">
                                   <span className={`block truncate text-sm`}>
-                                    {token.name}
+                                    {token.token.name}
                                   </span>
                                   <span className={`block truncate text-xs`}>
-                                    {token.symbol}
+                                    {token.token.symbol}
                                   </span>
                                 </div>
                               </div>
                               <div className="flex items-center gap-2">
                                 {tokenBalances && tokenBalances?.[i] && (
                                   <span className="block">
-                                    {formatUnits(
-                                      tokenBalances[i].result as bigint,
-                                      token.decimals
+                                    {Intl.NumberFormat('en-US', {
+                                      maximumFractionDigits: 2,
+                                    }).format(
+                                      parseFloat(
+                                        formatUnits(
+                                          tokenBalances[i].result as bigint,
+                                          token.token.decimals
+                                        )
+                                      )
                                     )}
                                   </span>
                                 )}
@@ -248,23 +348,26 @@ function SendTab() {
           </div>
           <div className="mt-3 space-y-2">
             {isConnected ? (
-              <button className="w-full flex items-center justify-center gap-2 bg-primary rounded-md shadow-sm py-2.5 text-white">
+              <button
+                className="w-full bg-primary rounded-md shadow-sm py-2.5 text-white"
+                onClick={handlePay}
+              >
                 Pay
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  className="w-4 h-4"
-                >
-                  <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" />
-                </svg>
               </button>
             ) : (
-              <button className="w-full bg-primary rounded-md shadow-sm py-2.5 text-white">
+              <button
+                className="w-full bg-primary rounded-md shadow-sm py-2.5 text-white"
+                onClick={() => open()}
+              >
                 Connect Wallet
               </button>
             )}
-            <button className="w-full pt-1 text-white">Close</button>
+            <button
+              className="w-full pt-1 text-white"
+              onClick={() => setQrData(undefined)}
+            >
+              Close
+            </button>
           </div>
         </div>
       )}

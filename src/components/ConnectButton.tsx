@@ -6,20 +6,17 @@ import {
 import { useWeb3Modal } from '@web3modal/wagmi/react'
 
 import { useAccount, useEnsName } from 'wagmi'
-import Truncate from './utils/Truncate'
+import truncate from '../utils/truncate'
 
 export default function ConnectButton() {
-  const { open, close } = useWeb3Modal()
+  const { open } = useWeb3Modal()
   const { address, isConnected } = useAccount()
-  const {
-    data: ensName,
-    isError,
-    isLoading,
-  } = useEnsName({
+  const { data: ensName } = useEnsName({
     address: address,
     chainId: 1,
     enabled: !!address,
   })
+
   return (
     <>
       {isConnected ? (
@@ -27,7 +24,7 @@ export default function ConnectButton() {
           className="flex flex-row items-center justify-center gap-2 px-4 py-2 rounded-full shadow-sm bg-primary"
           onClick={() => open()}
         >
-          {ensName ? ensName : Truncate(address, 14, '...')}
+          {ensName ? ensName : truncate(address, 14, '...')}
 
           <div className="w-5 h-5">
             <ArrowRightOnRectangleIcon />
