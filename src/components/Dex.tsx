@@ -40,7 +40,9 @@ function Dex() {
     let tokenA = selectA
     let tokenB = selectB
     setSelectA(tokenB)
+    setIndexA(indexB)
     setSelectB(tokenA)
+    setIndexB(indexA)
   }
 
   return (

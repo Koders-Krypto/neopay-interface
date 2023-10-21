@@ -1,5 +1,8 @@
 'use client'
-import { ChevronDownIcon } from '@heroicons/react/24/outline'
+import {
+  ChevronDownIcon,
+  MagnifyingGlassIcon,
+} from '@heroicons/react/24/outline'
 import Image from 'next/image'
 import { Fragment, useEffect, useState } from 'react'
 import { Dialog, Transition } from '@headlessui/react'
@@ -20,7 +23,7 @@ export default function SelectChain(props: any) {
     <>
       {selected?.address ? (
         <div
-          className="flex flex-row items-center justify-between gap-1 px-2 py-1 text-center rounded-full shadow-md cursor-default bg-slate-800"
+          className="flex flex-row items-center justify-between gap-1 px-2 py-1 text-center rounded-full shadow-md cursor-default bg-primary"
           onClick={() => setIsOpen(true)}
         >
           <div className="flex items-center justify-center w-5 h-5 bg-white rounded-full">
@@ -62,53 +65,64 @@ export default function SelectChain(props: any) {
           {/* Full-screen container to center the panel */}
           <div className="fixed inset-0 flex items-center justify-center w-screen p-4">
             {/* The actual dialog panel  */}
-            <Dialog.Panel className="flex flex-col w-full max-w-md gap-4 p-4 mx-auto text-white rounded-lg bg-black/95">
+            <Dialog.Panel className="flex flex-col w-full max-w-md gap-4 p-4 mx-auto text-white bg-black border rounded-lg shadow-lg border-white/20">
               <div className="flex flex-row items-center justify-between">
                 <Dialog.Title>Select a Token</Dialog.Title>
                 <div className="w-5 h-5" onClick={() => setIsOpen(false)}>
                   <XMarkIcon />
                 </div>
               </div>
-              {tokenList.map(
-                (token: any, i: number) =>
-                  token.address !== selected?.address &&
-                  token.address !== other?.address && (
-                    <div
-                      className="flex flex-row items-center justify-between cursor-pointer"
-                      key={i}
-                      onClick={() => {
-                        props.index(i)
-                        props.tokenID(token)
-                        setIsOpen(false)
-                      }}
-                    >
-                      <div className="flex flex-row items-center justify-center gap-2">
-                        <div className="flex items-center justify-center w-8 h-8 bg-white rounded-full">
-                          <Image
-                            src={token.logoURI}
-                            alt={token.name}
-                            height={'20'}
-                            width={'20'}
-                          />
+              <div className="flex flex-row items-center justify-start gap-2 px-2 py-2 rounded-full bg-slate-800">
+                <div className="w-5 h-5">
+                  <MagnifyingGlassIcon />
+                </div>
+                <input
+                  placeholder="Search"
+                  className="w-full bg-slate-800 focus:outline-none"
+                />
+              </div>
+              <div className="flex flex-col gap-4 pt-3 overflow-y-scroll border-t no-scrollbar border-white/20 h-96">
+                {tokenList.map(
+                  (token: any, i: number) =>
+                    token.address !== selected?.address &&
+                    token.address !== other?.address && (
+                      <div
+                        className="flex flex-row items-center justify-between px-2 py-1 rounded-lg cursor-pointer hover:bg-white/10"
+                        key={i}
+                        onClick={() => {
+                          props.index(i)
+                          props.tokenID(token)
+                          setIsOpen(false)
+                        }}
+                      >
+                        <div className="flex flex-row items-center justify-center gap-2">
+                          <div className="flex items-center justify-center w-8 h-8 bg-white rounded-full">
+                            <Image
+                              src={token.logoURI}
+                              alt={token.name}
+                              height={'20'}
+                              width={'20'}
+                            />
+                          </div>
+                          <div>
+                            <h3>{token.name}</h3>
+                            <h4 className="text-xs">{token.symbol}</h4>
+                          </div>
                         </div>
                         <div>
-                          <h3>{token.name}</h3>
-                          <h4 className="text-xs">{token.symbol}</h4>
+                          {props?.balances && props.balances?.[i] && (
+                            <span>
+                              {formatUnits(
+                                props.balances?.[i].result,
+                                token.decimals
+                              )}
+                            </span>
+                          )}
                         </div>
                       </div>
-                      <div>
-                        {props?.balances && props.balances?.[i] && (
-                          <span>
-                            {formatUnits(
-                              props.balances?.[i].result,
-                              token.decimals
-                            )}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  )
-              )}
+                    )
+                )}
+              </div>
 
               {/* ... */}
             </Dialog.Panel>
