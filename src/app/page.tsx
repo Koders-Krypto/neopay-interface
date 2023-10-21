@@ -12,7 +12,7 @@ export default function Page() {
     <>
       <main className="flex flex-col-reverse items-center justify-center min-h-screen gap-12 md:flex-row md:justify-between">
         <div className="self-start ml-4 space-y-6 md:ml-0 md:self-auto">
-          <h1 className="text-5xl font-bold leading-none text-white uppercase md:text-7xl">
+          <h1 className="text-5xl font-bold leading-none uppercase md:text-7xl text-primary">
             Neopay
           </h1>
           <h2 className="text-3xl md:text-5xl font-bold uppercase text-white leading-tight max-w-[20rem] md:max-w-2xl">

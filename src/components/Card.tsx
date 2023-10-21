@@ -16,13 +16,17 @@ export default function Card({
   image,
 }: Props) {
   return (
-    <div className="flex-1 bg-black/60 text-white p-8 shadow-md rounded-3xl space-y-6">
-      <Image src={image} width={100} height={100} alt={buttonText} />
-      <p>{content}</p>
-      <button className="bg-primary px-4 py-2 rounded-full flex items-center gap-2">
-        <Image src={buttonIcon} alt={buttonText} height={'20'} width={'20'} />
-        {buttonText}
-      </button>
+    <div className="relative flex flex-col items-center justify-center p-8 space-y-6 text-center text-white shadow-md bg-black/90 rounded-3xl">
+      <div className="absolute top-[-3rem] p-1 rounded-full bg-black shadow-md border border-primary">
+        <Image src={image} width={80} height={80} alt={buttonText} />
+      </div>
+      <div className="flex flex-col items-center justify-center gap-4">
+        <p>{content}</p>
+        <button className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary">
+          <Image src={buttonIcon} alt={buttonText} height={'20'} width={'20'} />
+          {buttonText}
+        </button>
+      </div>
     </div>
   )
 }
