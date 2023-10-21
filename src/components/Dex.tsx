@@ -1,23 +1,18 @@
-import React, { Fragment, SVGProps, useCallback, useRef, useState } from 'react'
-import QRCode from 'react-qr-code'
+import React, { useState } from 'react'
 import { erc20ABI, useAccount, useConnect, useContractReads } from 'wagmi'
 import { tokenList } from '../utils/tokenList'
-import { Listbox, Transition } from '@headlessui/react'
-import Image from 'next/image'
-import {
-  ArrowDownIcon,
-  CheckIcon,
-  ChevronUpDownIcon,
-} from '@heroicons/react/20/solid'
 import { useWeb3Modal } from '@web3modal/wagmi/react'
 import { formatUnits } from 'viem'
 import { ArrowsUpDownIcon, ChevronDownIcon } from '@heroicons/react/24/outline'
-import SelectChain from './SelectToken'
+import SelectToken from './SelectToken'
 
 function Dex() {
   const { address, isConnected } = useAccount()
   const { open } = useWeb3Modal()
-  const [select, setSelect] = useState()
+  const [selectA, setSelectA] = useState<any>(tokenList[0])
+  const [indexA, setIndexA] = useState(0)
+  const [selectB, setSelectB] = useState<any>(null)
+  const [indexB, setIndexB] = useState(0)
   const [amount, setAmount] = useState(0)
 
   const { data: tokenBalances } = useContractReads({
@@ -39,6 +34,13 @@ function Dex() {
     } else {
       setAmount(0)
     }
+  }
+
+  function inverseToken() {
+    let tokenA = selectA
+    let tokenB = selectB
+    setSelectA(tokenB)
+    setSelectB(tokenA)
   }
 
   return (
@@ -64,24 +66,72 @@ function Dex() {
                   minLength={1}
                   maxLength={79}
                   spellCheck="false"
+                  value={amount}
                   onChange={(e) => payAmountChange(parseFloat(e.target.value))}
                 />
 
-                <SelectChain tokens={tokenList} selected={tokenList[0]} />
+                <SelectToken
+                  select={selectA}
+                  tokenID={setSelectA}
+                  other={selectB}
+                  balances={tokenBalances}
+                  index={setIndexA}
+                />
               </div>
-              <div className={amount ? 'block' : 'invisible'}>
+
+              <div className="block">
                 <div className="flex flex-row items-center justify-between text-xs">
-                  <h4>$1,606.18</h4>
+                  <h4 className="invisible">$1,606.18</h4>
                   <div className="flex flex-row gap-1">
-                    <h5>Balance: 0.014</h5>
-                    <button className="font-semibold text-primary">Max</button>
+                    <h5
+                      className={
+                        tokenBalances &&
+                        tokenBalances?.[indexA] &&
+                        parseFloat(
+                          formatUnits(
+                            tokenBalances?.[indexA]?.result as bigint,
+                            selectA.decimals
+                          )
+                        ) > 0
+                          ? 'block'
+                          : 'invisible'
+                      }
+                    >
+                      Balance:{' '}
+                      {tokenBalances && tokenBalances?.[indexA] && (
+                        <span>
+                          {formatUnits(
+                            tokenBalances?.[indexA]?.result as bigint,
+                            selectA.decimals
+                          )}
+                        </span>
+                      )}
+                      <button
+                        className="ml-1 font-semibold text-primary"
+                        onClick={() =>
+                          setAmount(
+                            parseFloat(
+                              formatUnits(
+                                tokenBalances?.[indexA]?.result as bigint,
+                                selectA.decimals
+                              )
+                            )
+                          )
+                        }
+                      >
+                        Max
+                      </button>
+                    </h5>
                   </div>
                 </div>
               </div>
             </div>
           </div>
           <div className="absolute flex items-center justify-center centered">
-            <div className="w-9 h-9 p-1 bg-black/90 border-[3px] border-slate-800 rounded-lg shadow-md">
+            <div
+              className="w-9 h-9 p-1 bg-black/90 border-[3px] border-slate-800 rounded-lg shadow-md"
+              onClick={() => inverseToken()}
+            >
               <ArrowsUpDownIcon />
             </div>
           </div>
@@ -97,13 +147,19 @@ function Dex() {
                   min="0"
                   placeholder="0"
                 />
-                <SelectChain tokens={tokenList} selected={setSelect} />
+                <SelectToken
+                  select={selectB}
+                  tokenID={setSelectB}
+                  other={selectA}
+                  balances={tokenBalances}
+                  index={setIndexB}
+                />
               </div>
               <div className="invisible ">
                 <div className="flex flex-row items-center justify-between text-xs">
                   <h4>$1,606.18</h4>
                   <div className="flex flex-row gap-1">
-                    <h5>Balance: 0.014</h5>
+                    <h5>Balance:</h5>
                     <button className="font-semibold text-primary">Max</button>
                   </div>
                 </div>
