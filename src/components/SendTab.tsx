@@ -5,6 +5,7 @@ import {
   useAccount,
   useContractReads,
   useContractWrite,
+  useEnsName,
   usePublicClient,
 } from 'wagmi'
 import { tokenList } from '../utils/tokenList'
@@ -27,6 +28,7 @@ import { router02Abi } from '../assets/abi/router02Abi'
 import { ROUTER02_CONTRACT_ADDRESS } from '../utils/constants'
 import { useWeb3Modal } from '@web3modal/wagmi/react'
 import { waitForTransactionReceipt } from 'viem/public'
+import toast from 'react-hot-toast'
 
 const CheckmarkIcon = (props: SVGProps<SVGSVGElement>) => (
   <svg
@@ -102,6 +104,12 @@ function SendTab() {
     watch: true,
   })
 
+  const { data: receiverEnsName } = useEnsName({
+    address: qrData?.receiver,
+    chainId: 1,
+    enabled: !!qrData,
+  })
+
   const { writeAsync: swapAndTransfer } = useContractWrite({
     address: ROUTER02_CONTRACT_ADDRESS,
     abi: router02Abi,
@@ -129,9 +137,25 @@ function SendTab() {
     const transferAmount = parseUnits(qrData.amount, qrData.token.decimals)
 
     if (qrData.token.equals(selectedToken.token)) {
-      await transfer({
+      const transferTx = await transfer({
         args: [qrData.receiver, transferAmount],
       })
+      toast.promise(
+        waitForTransactionReceipt(publicClient, { hash: transferTx.hash }),
+        {
+          error: `Failed to pay ${qrData.amount} ${qrData.token.symbol} to ${
+            receiverEnsName ?? truncate(qrData.receiver, 14, '...')
+          }`,
+          loading: `Paying ${qrData.amount} ${qrData.token.symbol} to ${
+            receiverEnsName ?? truncate(qrData.receiver, 14, '...')
+          }`,
+          success: `Paid ${qrData.amount} ${qrData.token.symbol} to ${truncate(
+            qrData.receiver,
+            14,
+            '...'
+          )}`,
+        }
+      )
     } else {
       const pair = await Fetcher.fetchPairData(
         selectedToken.token,
@@ -158,16 +182,45 @@ function SendTab() {
       })
 
       if (allowance < transferAmount) {
-        const approveTxHash = await approve({
+        const approveTx = await approve({
           args: [ROUTER02_CONTRACT_ADDRESS, transferAmount],
         })
-        await waitForTransactionReceipt(publicClient, {
-          hash: approveTxHash.hash,
-        })
+        toast.promise(
+          waitForTransactionReceipt(publicClient, { hash: approveTx.hash }),
+          {
+            error: `Approval failed`,
+            loading: `Approving ${qrData.token.symbol}`,
+            success: `Approved ${qrData.token.symbol}`,
+          }
+        )
       }
 
       //@ts-ignore
-      await swapAndTransfer({ args: swapParams.args })
+      const swapAndTransferTx = await swapAndTransfer({ args: swapParams.args })
+      toast.promise(
+        waitForTransactionReceipt(publicClient, {
+          hash: swapAndTransferTx.hash,
+        }),
+        {
+          error: `Failed to pay ${
+            receiverEnsName ?? truncate(qrData.receiver, 14, '...')
+          }, ${qrData.amount} ${qrData.token.symbol}`,
+          loading: `Paying ${
+            receiverEnsName ?? truncate(qrData.receiver, 14, '...')
+          }, ${qrData.amount} ${
+            qrData.token.symbol
+          } with ${trade.executionPrice.toSignificant(6)} ${
+            selectedToken.token.symbol
+          }`,
+          success: `Paid ${
+            receiverEnsName ?? truncate(qrData.receiver, 14, '...')
+          }, ${qrData.amount} ${
+            qrData.token.symbol
+          } with ${trade.executionPrice.toSignificant(6)} ${
+            selectedToken.token.symbol
+          }`,
+        }
+      )
     }
   }
 
@@ -193,7 +246,7 @@ function SendTab() {
     <>
       {!qrData ? (
         <QrReader
-          onResult={(result, error) => {
+          onResult={async (result, error) => {
             if (!!result) {
               const {
                 amount,
@@ -217,26 +270,29 @@ function SendTab() {
         />
       ) : (
         <div>
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 font-bold">
-              <CashIcon
-                strokeWidth={1.5}
-                stroke="currentColor"
-                className="w-6 h-6"
-              />
-              <span className="block">
-                Amount: {qrData.amount} {qrData.token.symbol}
-              </span>
-            </div>
-            <div className="flex items-center gap-2 font-bold">
-              <UserIcon
-                strokeWidth={1.5}
-                stroke="currentColor"
-                className="w-6 h-6"
-              />
-              <span className="block">
-                Address: {truncate(qrData.receiver, 14, '...')}
-              </span>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 font-bold">
+                <CashIcon
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-6 h-6"
+                />
+                <span className="block">
+                  Amount: {qrData.amount} {qrData.token.symbol}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 font-bold">
+                <UserIcon
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-6 h-6"
+                />
+                <span className="block">
+                  Receiver:{' '}
+                  {receiverEnsName ?? truncate(qrData.receiver, 14, '...')}
+                </span>
+              </div>
             </div>
 
             <div className="space-y-1">
@@ -244,7 +300,7 @@ function SendTab() {
                 Select a Token to Pay
               </label>
               <Listbox value={selectedToken} onChange={setSelectedToken}>
-                <div className="relative mt-1 bg-white rounded-lg">
+                <div className="relative mt-1 bg-white rounded-lg z-50">
                   <Listbox.Button className="relative w-full cursor-default rounded-lg bg-white py-2 pl-3 pr-10 text-left shadow-md">
                     <div className="flex items-center gap-2">
                       <div className="bg-gray-200 p-1.5 rounded-full">
@@ -349,7 +405,7 @@ function SendTab() {
           <div className="mt-3 space-y-2">
             {isConnected ? (
               <button
-                className="w-full bg-primary rounded-md shadow-sm py-2.5 text-white"
+                className="w-full bg-primary rounded-md shadow-sm py-2.5 text-white flex items-center justify-center gap-2"
                 onClick={handlePay}
               >
                 Pay
