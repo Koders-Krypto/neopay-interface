@@ -8,27 +8,18 @@ import {
   useEnsName,
   usePublicClient,
 } from 'wagmi'
-import { tokenList } from '../utils/tokenList'
+import { Token, tokenList } from '../utils/tokenList'
 import { Listbox, Transition } from '@headlessui/react'
 import { CheckIcon, ChevronUpDownIcon } from '@heroicons/react/20/solid'
 import Image from 'next/image'
 import { formatUnits, parseUnits } from 'viem'
 import truncate from '../utils/truncate'
-import {
-  Fetcher,
-  Percent,
-  Route,
-  Router,
-  Token,
-  TokenAmount,
-  Trade,
-  TradeType,
-} from 'moonbeamswap'
 import { router02Abi } from '../assets/abi/router02Abi'
 import { ROUTER02_CONTRACT_ADDRESS } from '../utils/constants'
 import { useWeb3Modal } from '@web3modal/wagmi/react'
 import { waitForTransactionReceipt } from 'viem/public'
 import toast from 'react-hot-toast'
+import { getSwapParams } from '../utils/swap'
 
 const CheckmarkIcon = (props: SVGProps<SVGSVGElement>) => (
   <svg
@@ -94,7 +85,7 @@ function SendTab() {
     contracts: tokenList.map(
       (token) =>
         ({
-          address: token.token.address as `0x${string}`,
+          address: token.address as `0x${string}`,
           abi: erc20ABI,
           functionName: 'balanceOf',
           args: [address!],
@@ -118,14 +109,14 @@ function SendTab() {
   })
 
   const { writeAsync: transfer } = useContractWrite({
-    address: selectedToken.token.address as `0x${string}`,
+    address: selectedToken.address as `0x${string}`,
     abi: erc20ABI,
     functionName: 'transfer',
     account: address,
   })
 
   const { writeAsync: approve } = useContractWrite({
-    address: selectedToken.token.address as `0x${string}`,
+    address: selectedToken.address as `0x${string}`,
     abi: erc20ABI,
     functionName: 'approve',
     account: address,
@@ -136,7 +127,7 @@ function SendTab() {
 
     const transferAmount = parseUnits(qrData.amount, qrData.token.decimals)
 
-    if (qrData.token.equals(selectedToken.token)) {
+    if (qrData.token.address === selectedToken.address) {
       const transferTx = await transfer({
         args: [qrData.receiver, transferAmount],
       })
@@ -157,25 +148,20 @@ function SendTab() {
         }
       )
     } else {
-      const pair = await Fetcher.fetchPairData(
-        selectedToken.token,
-        qrData.token
+      const swapParams = await getSwapParams(
+        selectedToken,
+        qrData.token,
+        transferAmount,
+        publicClient,
+        {
+          ttl: 50,
+          recipient: qrData.receiver,
+          allowedSlippage: BigInt(100),
+        }
       )
-      const route = new Route([pair], selectedToken.token)
-      const trade = new Trade(
-        route,
-        new TokenAmount(qrData.token, transferAmount),
-        TradeType.EXACT_OUTPUT
-      )
-
-      const swapParams = Router.swapCallParameters(trade, {
-        ttl: 50,
-        recipient: qrData.receiver,
-        allowedSlippage: new Percent('1', '100'),
-      })
 
       const allowance = await publicClient.readContract({
-        address: selectedToken.token.address as `0x${string}`,
+        address: selectedToken.address as `0x${string}`,
         abi: erc20ABI,
         functionName: 'allowance',
         args: [address, ROUTER02_CONTRACT_ADDRESS],
@@ -195,8 +181,9 @@ function SendTab() {
         )
       }
 
-      //@ts-ignore
-      const swapAndTransferTx = await swapAndTransfer({ args: swapParams.args })
+      const swapAndTransferTx = await swapAndTransfer({
+        args: swapParams,
+      })
       toast.promise(
         waitForTransactionReceipt(publicClient, {
           hash: swapAndTransferTx.hash,
@@ -207,17 +194,13 @@ function SendTab() {
           }, ${qrData.amount} ${qrData.token.symbol}`,
           loading: `Paying ${
             receiverEnsName ?? truncate(qrData.receiver, 14, '...')
-          }, ${qrData.amount} ${
-            qrData.token.symbol
-          } with ${trade.executionPrice.toSignificant(6)} ${
-            selectedToken.token.symbol
+          }, ${qrData.amount} ${qrData.token.symbol} with ${
+            selectedToken.symbol
           }`,
           success: `Paid ${
             receiverEnsName ?? truncate(qrData.receiver, 14, '...')
-          }, ${qrData.amount} ${
-            qrData.token.symbol
-          } with ${trade.executionPrice.toSignificant(6)} ${
-            selectedToken.token.symbol
+          }, ${qrData.amount} ${qrData.token.symbol} with ${
+            selectedToken.symbol
           }`,
         }
       )
@@ -248,12 +231,7 @@ function SendTab() {
         <QrReader
           onResult={async (result, error) => {
             if (!!result) {
-              const {
-                amount,
-                token: { chainId, address, decimals, symbol, name },
-                receiver,
-              } = JSON.parse(result.getText())
-              const token = new Token(chainId, address, decimals, symbol, name)
+              const { amount, token, receiver } = JSON.parse(result.getText())
               setQrData({ amount, token, receiver })
             }
 
@@ -307,7 +285,7 @@ function SendTab() {
                         <div className="relative h-4 w-4">
                           <Image
                             src={selectedToken.logoURI}
-                            alt={selectedToken.token.name ?? ''}
+                            alt={selectedToken.name ?? ''}
                             sizes="16px"
                             fill
                             style={{
@@ -317,7 +295,7 @@ function SendTab() {
                         </div>
                       </div>
                       <span className="block truncate text-gray-900">
-                        {selectedToken.token.symbol}
+                        {selectedToken.symbol}
                       </span>
                     </div>
                     <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
@@ -336,7 +314,7 @@ function SendTab() {
                     <Listbox.Options className="absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg focus:outline-none">
                       {tokenList.map((token, i) => (
                         <Listbox.Option
-                          key={token.token.address}
+                          key={token.address}
                           className={({ active }) =>
                             `relative cursor-default select-none py-2 pl-3 pr-4 text-gray-900 ${
                               active ? 'bg-blue-200' : 'bg-white'
@@ -355,7 +333,7 @@ function SendTab() {
                                   <div className="relative h-4 w-4">
                                     <Image
                                       src={token.logoURI}
-                                      alt={token.token.name ?? ''}
+                                      alt={token.name ?? ''}
                                       sizes="16px"
                                       fill
                                       style={{
@@ -366,10 +344,10 @@ function SendTab() {
                                 </div>
                                 <div className="flex flex-col">
                                   <span className={`block truncate text-sm`}>
-                                    {token.token.name}
+                                    {token.name}
                                   </span>
                                   <span className={`block truncate text-xs`}>
-                                    {token.token.symbol}
+                                    {token.symbol}
                                   </span>
                                 </div>
                               </div>
@@ -382,7 +360,7 @@ function SendTab() {
                                       parseFloat(
                                         formatUnits(
                                           tokenBalances[i].result as bigint,
-                                          token.token.decimals
+                                          token.decimals
                                         )
                                       )
                                     )}

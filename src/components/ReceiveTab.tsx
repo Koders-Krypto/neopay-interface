@@ -1,14 +1,13 @@
 import React, { Fragment, SVGProps, useCallback, useRef, useState } from 'react'
 import QRCode from 'react-qr-code'
 import { erc20ABI, useAccount, useContractReads } from 'wagmi'
-import { tokenList } from '../utils/tokenList'
+import { Token, tokenList } from '../utils/tokenList'
 import { Listbox, Transition } from '@headlessui/react'
 import Image from 'next/image'
 import { CheckIcon, ChevronUpDownIcon } from '@heroicons/react/20/solid'
 import { useWeb3Modal } from '@web3modal/wagmi/react'
 import { toPng } from 'html-to-image'
 import { formatUnits } from 'viem'
-import { Token } from 'moonbeamswap'
 
 const DownloadIcon = (props: SVGProps<SVGSVGElement>) => (
   <svg
@@ -45,7 +44,7 @@ function ReceiveTab() {
     contracts: tokenList.map(
       (token) =>
         ({
-          address: token.token.address as `0x${string}`,
+          address: token.address as `0x${string}`,
           abi: erc20ABI,
           functionName: 'balanceOf',
           args: [address!],
@@ -59,7 +58,7 @@ function ReceiveTab() {
     if (!address) return
     setQrData({
       amount,
-      token: token.token,
+      token: token,
       receiver: address,
     })
   }
@@ -95,7 +94,7 @@ function ReceiveTab() {
                       <div className="relative w-4 h-4">
                         <Image
                           src={token.logoURI}
-                          alt={token.token.name ?? ''}
+                          alt={token.name ?? ''}
                           sizes="16px"
                           fill
                           style={{
@@ -105,7 +104,7 @@ function ReceiveTab() {
                       </div>
                     </div>
                     <span className="block text-gray-900 truncate">
-                      {token.token.symbol}
+                      {token.symbol}
                     </span>
                   </div>
                   <span className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
@@ -124,7 +123,7 @@ function ReceiveTab() {
                   <Listbox.Options className="absolute w-full py-1 mt-1 overflow-auto text-base bg-white rounded-md shadow-lg max-h-60 focus:outline-none">
                     {tokenList.map((token, i) => (
                       <Listbox.Option
-                        key={token.token.address}
+                        key={token.address}
                         className={({ active }) =>
                           `relative cursor-default select-none py-2 pl-3 pr-4 text-gray-900 ${
                             active ? 'bg-blue-200' : 'bg-white'
@@ -143,7 +142,7 @@ function ReceiveTab() {
                                 <div className="relative w-4 h-4">
                                   <Image
                                     src={token.logoURI}
-                                    alt={token.token.name ?? ''}
+                                    alt={token.name ?? ''}
                                     sizes="16px"
                                     fill
                                     style={{
@@ -154,10 +153,10 @@ function ReceiveTab() {
                               </div>
                               <div className="flex flex-col">
                                 <span className={`block truncate text-sm`}>
-                                  {token.token.name}
+                                  {token.name}
                                 </span>
                                 <span className={`block truncate text-xs`}>
-                                  {token.token.symbol}
+                                  {token.symbol}
                                 </span>
                               </div>
                             </div>
@@ -170,7 +169,7 @@ function ReceiveTab() {
                                     parseFloat(
                                       formatUnits(
                                         tokenBalances[i].result as bigint,
-                                        token.token.decimals
+                                        token.decimals
                                       )
                                     )
                                   )}
