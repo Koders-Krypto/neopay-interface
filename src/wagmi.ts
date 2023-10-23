@@ -1,5 +1,10 @@
-import { w3mConnectors, w3mProvider } from '@web3modal/ethereum'
+import { walletConnectProvider, EIP6963Connector } from '@web3modal/wagmi'
 import { Chain, configureChains, createConfig, mainnet } from 'wagmi'
+import { CoinbaseWalletConnector } from 'wagmi/connectors/coinbaseWallet'
+import { InjectedConnector } from 'wagmi/connectors/injected'
+import { WalletConnectConnector } from 'wagmi/connectors/walletConnect'
+import { jsonRpcProvider } from 'wagmi/providers/jsonRpc'
+import { publicProvider } from 'wagmi/providers/public'
 
 export const walletConnectProjectId = '9577531e389c799d54896f39e80d7bb0'
 
@@ -34,16 +39,41 @@ const {
   webSocketPublicClient,
 } = configureChains(
   [mainnet, neo],
-  [w3mProvider({ projectId: walletConnectProjectId })]
+  [
+    jsonRpcProvider({
+      rpc: (chain) => ({
+        http: chain.rpcUrls.default.http[0],
+      }),
+    }),
+    publicProvider(),
+  ]
 )
+
+const metadata = {
+  name: 'Neopay',
+  description: 'Scan and pay',
+  url: 'https://neopaynetwork.com',
+  icons: ['https://neopaynetwork.com/neopay-icon.png'],
+}
 
 export const config = createConfig({
   autoConnect: true,
-  connectors: w3mConnectors({
-    chains,
-    projectId: walletConnectProjectId,
-    version: 2,
-  }),
+  connectors: [
+    new WalletConnectConnector({
+      chains,
+      options: {
+        projectId: walletConnectProjectId,
+        showQrModal: false,
+        metadata,
+      },
+    }),
+    new EIP6963Connector({ chains }),
+    new InjectedConnector({ chains, options: { shimDisconnect: true } }),
+    new CoinbaseWalletConnector({
+      chains,
+      options: { appName: metadata.name },
+    }),
+  ],
   publicClient,
   webSocketPublicClient,
 })
