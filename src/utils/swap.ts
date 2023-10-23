@@ -74,25 +74,16 @@ export const getSwapParams = async (
 ): Promise<[bigint, bigint, `0x${string}`[], `0x${string}`, bigint]> => {
   const to = getAddress(options.recipient)
   const reserves = await fetchPairData(tokenA, tokenB, publicClient)
-  const tokens =
-    tokenA.address.toLowerCase() < tokenB.address.toLowerCase()
-      ? [tokenA.address, tokenB.address]
-      : [tokenB.address, tokenA.address]
-  let inputReserve
-  let outputReserve
-  if (tokenA.address === tokens[0]) {
-    inputReserve = reserves[0]
-    outputReserve = reserves[1]
-  } else {
-    inputReserve = reserves[1]
-    outputReserve = reserves[0]
-  }
+
+  let inputReserve = reserves[0]
+  let outputReserve = reserves[1]
   const inputAmount =
     (inputReserve * outputAmount * BigInt(1000)) /
     ((outputReserve - outputAmount) * BigInt(997))
   const slippageAdjustedAmountIn =
     (options.allowedSlippage * inputAmount) / BigInt(100) + BigInt(1)
+  const path = [tokenA.address, tokenB.address]
   const deadline = BigInt(Math.floor(new Date().getTime() / 1000) + options.ttl)
 
-  return [outputAmount, slippageAdjustedAmountIn, tokens, to, deadline]
+  return [outputAmount, slippageAdjustedAmountIn, path, to, deadline]
 }
