@@ -186,7 +186,7 @@ function Dex() {
               </div>
 
               {tokenBalances && tokenBalances?.[indexA] && (
-                <h5 className="text-xs self-end">
+                <h5 className="self-end text-xs">
                   Balance:{' '}
                   <span>
                     {Intl.NumberFormat('en-US', {
@@ -217,7 +217,7 @@ function Dex() {
               )}
             </div>
           </div>
-          <div className="absolute flex items-center justify-center left-0 right-0 m-auto top-[46.5%]">
+          <div className="absolute flex items-center justify-center left-0 right-0 m-auto top-[42.5%]">
             <div
               className="w-9 h-9 p-1 bg-black/90 border-[3px] border-slate-800 rounded-lg shadow-md"
               onClick={inverseToken}
@@ -256,7 +256,7 @@ function Dex() {
               </div>
 
               {tokenBalances && tokenBalances?.[indexB] && (
-                <h5 className="text-xs self-end">
+                <h5 className="self-end text-xs">
                   Balance:{' '}
                   <span>
                     {Intl.NumberFormat('en-US', {

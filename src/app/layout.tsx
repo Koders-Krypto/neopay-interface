@@ -53,7 +53,19 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={noto.className + ' background'}>
-        <Toaster position="bottom-center" reverseOrder={false} />
+        <Toaster
+          position="bottom-center"
+          reverseOrder={false}
+          toastOptions={{
+            className: '',
+            style: {
+              border: '2px solid #01AE92',
+              padding: '16px',
+              color: '#FFF',
+              backgroundColor: '#2C2C2B',
+            },
+          }}
+        />
         <Providers>
           <Navbar />
           <div className="px-4 mx-auto max-w-7xl">{children}</div>

@@ -287,11 +287,11 @@ function SendTab() {
                 Select a Token to Pay
               </label>
               <Listbox value={selectedToken} onChange={setSelectedToken}>
-                <div className="relative mt-1 bg-white rounded-lg z-50">
-                  <Listbox.Button className="relative w-full cursor-default rounded-lg bg-white py-2 pl-3 pr-10 text-left shadow-md">
+                <div className="relative z-50 mt-1 bg-white rounded-lg">
+                  <Listbox.Button className="relative w-full py-2 pl-3 pr-10 text-left bg-white rounded-lg shadow-md cursor-default">
                     <div className="flex items-center gap-2">
                       <div className="bg-gray-200 p-1.5 rounded-full">
-                        <div className="relative h-4 w-4">
+                        <div className="relative w-4 h-4">
                           <Image
                             src={selectedToken.logoURI}
                             alt={selectedToken.name ?? ''}
@@ -303,13 +303,13 @@ function SendTab() {
                           />
                         </div>
                       </div>
-                      <span className="block truncate text-gray-900">
+                      <span className="block text-gray-900 truncate">
                         {selectedToken.symbol}
                       </span>
                     </div>
-                    <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+                    <span className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
                       <ChevronUpDownIcon
-                        className="h-5 w-5 text-gray-400"
+                        className="w-5 h-5 text-gray-400"
                         aria-hidden="true"
                       />
                     </span>
@@ -320,7 +320,7 @@ function SendTab() {
                     leaveFrom="opacity-100"
                     leaveTo="opacity-0"
                   >
-                    <Listbox.Options className="absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg focus:outline-none">
+                    <Listbox.Options className="absolute w-full py-1 mt-1 overflow-auto text-base bg-white rounded-md shadow-lg max-h-60 focus:outline-none">
                       {tokenList.map((token, i) => (
                         <Listbox.Option
                           key={token.address}
@@ -339,7 +339,7 @@ function SendTab() {
                             >
                               <div className="flex items-center gap-2">
                                 <div className="bg-gray-200 p-1.5 rounded-full">
-                                  <div className="relative h-4 w-4">
+                                  <div className="relative w-4 h-4">
                                     <Image
                                       src={token.logoURI}
                                       alt={token.name ?? ''}
@@ -376,7 +376,7 @@ function SendTab() {
                                   </span>
                                 )}
                                 {selected && (
-                                  <CheckIcon className="h-4 w-4 text-primary" />
+                                  <CheckIcon className="w-4 h-4 text-primary" />
                                 )}
                               </div>
                             </div>
