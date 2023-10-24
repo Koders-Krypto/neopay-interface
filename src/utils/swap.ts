@@ -124,14 +124,13 @@ export const getSwapParamsExactIn = async (
 
   const outputAmount =
     (inputAmount * BigInt(997) * outputReserve) /
-      (inputReserve * BigInt(1000)) +
-    inputAmount * BigInt(997)
+    (inputReserve * BigInt(1000) + inputAmount * BigInt(997))
   const slippageAdjustedAmountOut =
     (options.allowedSlippage * outputAmount) / BigInt(100)
   const path = [tokenA.address, tokenB.address]
   const deadline = BigInt(Math.floor(new Date().getTime() / 1000) + options.ttl)
 
-  return [slippageAdjustedAmountOut, inputAmount, path, to, deadline]
+  return [inputAmount, slippageAdjustedAmountOut, path, to, deadline]
 }
 
 export const getSwapParamsExactOut = async (

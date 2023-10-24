@@ -55,7 +55,12 @@ function Dex() {
       inputAmount,
       publicClient
     )
-    setAmountB(formatUnits(executionPrice, tokenB.decimals))
+    setAmountB(
+      formatUnits(
+        (executionPrice * inputAmount) / parseUnits('1', tokenA.decimals),
+        tokenB.decimals
+      )
+    )
     setTradeType(TradeType.EXACT_INPUT)
   }
 
@@ -70,7 +75,12 @@ function Dex() {
       outputAmount,
       publicClient
     )
-    setAmountA(formatUnits(executionPrice, tokenA.decimals))
+    setAmountA(
+      formatUnits(
+        (executionPrice * outputAmount) / parseUnits('1', tokenB.decimals),
+        tokenA.decimals
+      )
+    )
     setTradeType(TradeType.EXACT_OUTPUT)
   }
 
@@ -103,37 +113,41 @@ function Dex() {
       )
     }
 
-    const allowance = await publicClient.readContract({
-      address: tokenA.address,
-      abi: erc20ABI,
-      functionName: 'allowance',
-      args: [address, ROUTER02_CONTRACT_ADDRESS],
-    })
-    if (allowance < inputAmount) {
-      const approveTx = await walletClient.writeContract({
+    try {
+      const allowance = await publicClient.readContract({
         address: tokenA.address,
         abi: erc20ABI,
-        functionName: 'approve',
-        args: [ROUTER02_CONTRACT_ADDRESS, inputAmount],
+        functionName: 'allowance',
+        args: [address, ROUTER02_CONTRACT_ADDRESS],
       })
-      toast.promise(waitForTransaction({ hash: approveTx }), {
-        error: `Approval failed`,
-        loading: `Approving ${amountA} ${tokenA.symbol}`,
-        success: `Approved ${amountA} ${tokenA.symbol}`,
-      })
-    }
+      if (allowance < inputAmount) {
+        const approveTx = await walletClient.writeContract({
+          address: tokenA.address,
+          abi: erc20ABI,
+          functionName: 'approve',
+          args: [ROUTER02_CONTRACT_ADDRESS, inputAmount],
+        })
+        toast.promise(waitForTransaction({ hash: approveTx }), {
+          error: `Approval failed`,
+          loading: `Approving ${amountA} ${tokenA.symbol}`,
+          success: `Approved ${amountA} ${tokenA.symbol}`,
+        })
+      }
 
-    const swapTx = await walletClient.writeContract({
-      address: ROUTER02_CONTRACT_ADDRESS,
-      abi: router02Abi,
-      functionName: tradeType,
-      args: [swapParams],
-    })
-    toast.promise(waitForTransaction({ hash: swapTx }), {
-      error: `Swap failed`,
-      loading: `Swapping ${amountA} ${tokenA.symbol} for ${amountB} ${tokenB.symbol}`,
-      success: `Swapped ${amountA} ${tokenA.symbol} for ${amountB} ${tokenB.symbol}`,
-    })
+      const swapTx = await walletClient.writeContract({
+        address: ROUTER02_CONTRACT_ADDRESS,
+        abi: router02Abi,
+        functionName: tradeType,
+        args: swapParams,
+      })
+      toast.promise(waitForTransaction({ hash: swapTx }), {
+        error: `Swap failed`,
+        loading: `Swapping ${amountA} ${tokenA.symbol} for ${amountB} ${tokenB.symbol}`,
+        success: `Swapped ${amountA} ${tokenA.symbol} for ${amountB} ${tokenB.symbol}`,
+      })
+    } catch (error) {
+      console.log('swap failed =>', error)
+    }
   }
 
   return (
