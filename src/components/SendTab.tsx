@@ -1,4 +1,4 @@
-import React, { Fragment, SVGProps, useState } from 'react'
+import React, { Fragment, SVGProps, useEffect, useState } from 'react'
 import { QrReader } from 'react-qr-reader'
 import {
   erc20ABI,
@@ -81,6 +81,7 @@ function SendTab() {
   const [cameraEnabled, setCameraEnabled] = useState(false)
   const [qrData, setQrData] = useState<QrDataInterface>()
   const [selectedToken, setSelectedToken] = useState(tokenList[0])
+  const [amountToPay, setAmountToPay] = useState<string>()
 
   const tokenBalances = useTokenBalances()
 
@@ -119,14 +120,6 @@ function SendTab() {
         }
       )
     } else {
-      console.log(
-        await getExecutionPriceExactOut(
-          selectedToken,
-          qrData.token,
-          transferAmount,
-          publicClient
-        )
-      )
       const swapParams = await getSwapParamsExactOut(
         selectedToken,
         qrData.token,
@@ -185,6 +178,33 @@ function SendTab() {
     }
   }
 
+  useEffect(() => {
+    if (!qrData) return
+    if (qrData.token.address === selectedToken.address) {
+      setAmountToPay(undefined)
+      return
+    }
+
+    const fetchExecutionPrice = async () => {
+      const transferAmount = parseUnits(qrData.amount, qrData.token.decimals)
+      const executionPrice = await getExecutionPriceExactOut(
+        selectedToken,
+        qrData.token,
+        transferAmount,
+        publicClient
+      )
+      setAmountToPay(
+        formatUnits(
+          (executionPrice * transferAmount) /
+            parseUnits('1', qrData.token.decimals),
+          selectedToken.decimals
+        )
+      )
+    }
+
+    fetchExecutionPrice()
+  }, [publicClient, qrData, selectedToken])
+
   if (!cameraEnabled) {
     return (
       <div className="flex justify-center items-center h-[21rem]">
@@ -227,7 +247,7 @@ function SendTab() {
       ) : (
         <div>
           <div className="space-y-4">
-            <div className="space-y-2">
+            <div className="space-y-3">
               <div className="flex items-center gap-2 font-bold">
                 <CashIcon
                   strokeWidth={1.5}
@@ -237,6 +257,17 @@ function SendTab() {
                 <span className="block">
                   Amount: {qrData.amount} {qrData.token.symbol}
                 </span>
+                {amountToPay && (
+                  <>
+                    <span>≈</span>
+                    <span className="block">
+                      {Intl.NumberFormat('en-US', {
+                        maximumFractionDigits: 4,
+                      }).format(parseFloat(amountToPay))}{' '}
+                      {selectedToken.symbol}
+                    </span>
+                  </>
+                )}
               </div>
               <div className="flex items-center gap-2 font-bold">
                 <UserIcon

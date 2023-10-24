@@ -52,13 +52,13 @@ export default function Page() {
     <div className="flex flex-col items-center justify-center min-h-screen gap-4">
       <Tab.Group
         as="div"
-        className="w-full max-w-md p-6 text-white shadow-md bg-black/60 rounded-xl"
+        className="w-full max-w-md p-3 md:p-6 text-white shadow-md bg-black/60 rounded-xl"
       >
         <Tab.List className="flex p-1 mb-4 rounded-lg bg-black/50">
           <Tab as={Fragment}>
             {({ selected }) => (
               <button
-                className={`flex-1 px-4 py-1.5 rounded-md shadow-md focus:outline-none flex items-center justify-center gap-2 ${
+                className={`flex-1 px-2 md:px-4 py-1.5 rounded-md shadow-md focus:outline-none flex items-center justify-center gap-2 ${
                   selected ? 'bg-primary' : 'bg-transparent'
                 }`}
               >
@@ -74,7 +74,7 @@ export default function Page() {
           <Tab as={Fragment}>
             {({ selected }) => (
               <button
-                className={`flex-1 px-4 py-1.5 rounded-md shadow-md focus:outline-none flex items-center justify-center gap-2 ${
+                className={`flex-1 px-2 md:px-4 py-1.5 rounded-md shadow-md focus:outline-none flex items-center justify-center gap-2 ${
                   selected ? 'bg-primary' : 'bg-transparent'
                 }`}
               >
@@ -90,7 +90,7 @@ export default function Page() {
           <Tab as={Fragment}>
             {({ selected }) => (
               <button
-                className={`flex-1 px-4 py-1.5 rounded-md shadow-md focus:outline-none flex items-center justify-center gap-2 ${
+                className={`flex-1 px-2 md:px-4 py-1.5 rounded-md shadow-md focus:outline-none flex items-center justify-center gap-2 ${
                   selected ? 'bg-primary' : 'bg-transparent'
                 }`}
               >

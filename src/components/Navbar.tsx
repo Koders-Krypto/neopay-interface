@@ -5,10 +5,17 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import ConnectButton from './ConnectButton'
 import { usePathname } from 'next/navigation'
+import { GiftIcon } from '@heroicons/react/20/solid'
+import { useWalletClient } from 'wagmi'
+import { FAUCET_ADDRESS } from '../utils/constants'
+import { parseAbi } from 'viem'
 
 export default function Navbar() {
   const pathname = usePathname()
+  const { data: walletClient } = useWalletClient()
   const [navbarBgColor, setNavbarBgColor] = useState('bg-transparent')
+
+  const faucetAbi = parseAbi(['function claim() external'])
 
   const changeBackground = () => {
     if (window.scrollY >= 66) {
@@ -16,6 +23,14 @@ export default function Navbar() {
     } else {
       setNavbarBgColor('bg-transparent')
     }
+  }
+
+  const handleFaucet = async () => {
+    await walletClient?.writeContract({
+      address: FAUCET_ADDRESS,
+      abi: faucetAbi,
+      functionName: 'claim',
+    })
   }
 
   useEffect(() => {
@@ -39,7 +54,16 @@ export default function Navbar() {
           />
         </Link>
         {pathname === '/app' ? (
-          <ConnectButton />
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleFaucet}
+              className="bg-primary px-4 py-2 rounded-full flex items-center gap-2"
+            >
+              <span className="hidden md:block">Faucet</span>
+              <GiftIcon className="h-5 w-5" />
+            </button>
+            <ConnectButton />
+          </div>
         ) : (
           <Link
             href="/app"
