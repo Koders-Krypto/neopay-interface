@@ -1,7 +1,7 @@
 'use client'
 
 import { Tab } from '@headlessui/react'
-import { Fragment, SVGProps, useState } from 'react'
+import { Fragment, SVGProps } from 'react'
 import ReceiveTab from '../../components/ReceiveTab'
 import SendTab from '../../components/SendTab'
 import Dex from '../../components/Dex'

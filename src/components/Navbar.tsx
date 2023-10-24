@@ -15,8 +15,6 @@ export default function Navbar() {
   const { data: walletClient } = useWalletClient()
   const [navbarBgColor, setNavbarBgColor] = useState('bg-transparent')
 
-  const faucetAbi = parseAbi(['function claim() external'])
-
   const changeBackground = () => {
     if (window.scrollY >= 66) {
       setNavbarBgColor('bg-black/80 shadow-2xl')
@@ -28,7 +26,7 @@ export default function Navbar() {
   const handleFaucet = async () => {
     await walletClient?.writeContract({
       address: FAUCET_ADDRESS,
-      abi: faucetAbi,
+      abi: parseAbi(['function claim() external']),
       functionName: 'claim',
     })
   }

@@ -4,6 +4,7 @@ import {
   erc20ABI,
   useAccount,
   useEnsName,
+  useNetwork,
   usePublicClient,
   useWalletClient,
 } from 'wagmi'
@@ -20,6 +21,7 @@ import { waitForTransactionReceipt } from 'viem/public'
 import toast from 'react-hot-toast'
 import { getExecutionPriceExactOut, getSwapParamsExactOut } from '../utils/swap'
 import { useTokenBalances } from '../hooks/useTokenBalances'
+import { ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline'
 
 const CheckmarkIcon = (props: SVGProps<SVGSVGElement>) => (
   <svg
@@ -75,6 +77,7 @@ interface QrDataInterface {
 function SendTab() {
   const { open } = useWeb3Modal()
   const { address, isConnected } = useAccount()
+  const { chain } = useNetwork()
   const publicClient = usePublicClient()
   const { data: walletClient } = useWalletClient()
 
@@ -112,11 +115,25 @@ function SendTab() {
           loading: `Paying ${qrData.amount} ${qrData.token.symbol} to ${
             receiverEnsName ?? truncate(qrData.receiver, 14, '...')
           }`,
-          success: `Paid ${qrData.amount} ${qrData.token.symbol} to ${truncate(
-            qrData.receiver,
-            14,
-            '...'
-          )}`,
+          success: (
+            <div>
+              <span>
+                {`Paid ${qrData.amount} ${qrData.token.symbol} to ${truncate(
+                  qrData.receiver,
+                  14,
+                  '...'
+                )}`}
+              </span>
+              <a
+                className="flex items-center gap-2"
+                target="_blank"
+                href={`${chain?.blockExplorers?.default.url}/${transferTx}`}
+              >
+                <span className="font-light underline">View on explorer</span>
+                <ArrowTopRightOnSquareIcon className="h-4 w-4" />
+              </a>
+            </div>
+          ),
         }
       )
     } else {
@@ -151,7 +168,21 @@ function SendTab() {
           {
             error: `Approval failed`,
             loading: `Approving ${qrData.amount} ${qrData.token.symbol}`,
-            success: `Approved ${qrData.amount} ${qrData.token.symbol}`,
+            success: (
+              <div>
+                <span>
+                  {`Approved ${qrData.amount} ${qrData.token.symbol}`}
+                </span>
+                <a
+                  className="flex items-center gap-2"
+                  target="_blank"
+                  href={`${chain?.blockExplorers?.default.url}/${approveTx}`}
+                >
+                  <span className="font-light underline">View on explorer</span>
+                  <ArrowTopRightOnSquareIcon className="h-4 w-4" />
+                </a>
+              </div>
+            ),
           }
         )
       }
@@ -168,11 +199,25 @@ function SendTab() {
         {
           error: `Payment failed`,
           loading: `Payment in progress`,
-          success: `Paid ${
-            receiverEnsName ?? truncate(qrData.receiver, 14, '...')
-          }, ${qrData.amount} ${qrData.token.symbol} with ${
-            selectedToken.symbol
-          }`,
+          success: (
+            <div>
+              <span>
+                {`Paid ${
+                  receiverEnsName ?? truncate(qrData.receiver, 14, '...')
+                }, ${qrData.amount} ${qrData.token.symbol} with ${
+                  selectedToken.symbol
+                }`}
+              </span>
+              <a
+                className="flex items-center gap-2"
+                target="_blank"
+                href={`${chain?.blockExplorers?.default.url}/${swapAndTransferTx}`}
+              >
+                <span className="font-light underline">View on explorer</span>
+                <ArrowTopRightOnSquareIcon className="h-4 w-4" />
+              </a>
+            </div>
+          ),
         }
       )
     }

@@ -1,14 +1,19 @@
 import React, { Fragment, SVGProps, useCallback, useRef, useState } from 'react'
 import QRCode from 'react-qr-code'
-import { useAccount } from 'wagmi'
+import { erc20ABI, useAccount, useNetwork, usePublicClient } from 'wagmi'
 import { Token, tokenList } from '../utils/tokenList'
 import { Listbox, Transition } from '@headlessui/react'
 import Image from 'next/image'
 import { CheckIcon, ChevronUpDownIcon } from '@heroicons/react/20/solid'
 import { useWeb3Modal } from '@web3modal/wagmi/react'
 import { toPng } from 'html-to-image'
-import { formatUnits } from 'viem'
+import { formatUnits, parseUnits } from 'viem'
 import { useTokenBalances } from '../hooks/useTokenBalances'
+import { pools } from '../utils/constants'
+import { v2PairAbi } from '../assets/abi/v2PairAbi'
+import toast from 'react-hot-toast'
+import truncate from '../utils/truncate'
+import { ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline'
 
 const DownloadIcon = (props: SVGProps<SVGSVGElement>) => (
   <svg
@@ -34,6 +39,8 @@ interface QrDataInterface {
 function ReceiveTab() {
   const { address, isConnected } = useAccount()
   const { open } = useWeb3Modal()
+  const publicClient = usePublicClient()
+  const { chain } = useNetwork()
 
   const [token, setToken] = useState(tokenList[0])
   const [amount, setAmount] = useState<`${number}`>('10')
@@ -49,6 +56,90 @@ function ReceiveTab() {
       amount,
       token: token,
       receiver: address,
+    })
+
+    const unwatch = publicClient.watchContractEvent({
+      address: token.address,
+      abi: erc20ABI,
+      eventName: 'Transfer',
+      args: { to: address },
+      onLogs: (logs) => {
+        logs.forEach((log) => {
+          if (log.eventName === 'Transfer') {
+            if (log.args.to !== log.args.from) {
+              const amountToReceive = parseUnits(amount, token.decimals)
+              if (log.args.value === amountToReceive) {
+                toast.success(
+                  <div>
+                    <span>
+                      {`Recieved ${amount} ${token.symbol} from ${truncate(
+                        log.args.from,
+                        14,
+                        '...'
+                      )}`}
+                    </span>
+                    <a
+                      className="flex items-center gap-2"
+                      target="_blank"
+                      href={`${chain?.blockExplorers?.default.url}/${log.transactionHash}`}
+                    >
+                      <span className="font-light underline">
+                        View on explorer
+                      </span>
+                      <ArrowTopRightOnSquareIcon className="h-4 w-4" />
+                    </a>
+                  </div>
+                )
+                unwatch()
+              }
+            }
+          }
+        })
+      },
+    })
+    pools.map((pool) => {
+      const unwatch = publicClient.watchContractEvent({
+        address: pool,
+        abi: v2PairAbi,
+        eventName: 'Swap',
+        args: { to: address },
+        onLogs: (logs) => {
+          logs.forEach((log) => {
+            if (log.eventName === 'Swap') {
+              if (log.args.to !== log.args.sender) {
+                const amountToReceive = parseUnits(amount, token.decimals)
+                if (
+                  log.args.amount0Out === amountToReceive ||
+                  log.args.amount1Out === amountToReceive
+                ) {
+                  toast.success(
+                    <div>
+                      <span>
+                        {`Recieved ${amount} ${token.symbol} from ${truncate(
+                          log.args.sender,
+                          14,
+                          '...'
+                        )}`}
+                      </span>
+                      <a
+                        className="flex items-center gap-2"
+                        target="_blank"
+                        href={`${chain?.blockExplorers?.default.url}/${log.transactionHash}`}
+                      >
+                        <span className="font-light underline">
+                          View on explorer
+                        </span>
+                        <ArrowTopRightOnSquareIcon className="h-4 w-4" />
+                      </a>
+                    </div>
+                  )
+                  unwatch()
+                }
+              }
+            }
+          })
+        },
+      })
     })
   }
 

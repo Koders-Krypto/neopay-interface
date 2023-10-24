@@ -54,16 +54,20 @@ export default function RootLayout({
     <html lang="en">
       <body className={noto.className + ' background'}>
         <Toaster
-          position="bottom-center"
+          position="top-right"
           reverseOrder={false}
+          containerClassName="max-w-7xl mx-auto"
+          containerStyle={{
+            top: '80px',
+          }}
           toastOptions={{
-            className: '',
             style: {
               border: '2px solid #01AE92',
               padding: '16px',
               color: '#FFF',
               backgroundColor: '#2C2C2B',
             },
+            duration: 5000,
           }}
         />
         <Providers>
