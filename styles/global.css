@@ -39,12 +39,6 @@ input::-webkit-inner-spin-button {
   margin: 0;
 }
 
-.centered {
-  left: 0;
-  right: 0;
-  margin: auto;
-  top: 42.5%;
-}
 /* width */
 ::-webkit-scrollbar {
   width: 5px;

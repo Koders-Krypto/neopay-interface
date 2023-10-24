@@ -3,10 +3,9 @@ import { QrReader } from 'react-qr-reader'
 import {
   erc20ABI,
   useAccount,
-  useContractReads,
-  useContractWrite,
   useEnsName,
   usePublicClient,
+  useWalletClient,
 } from 'wagmi'
 import { Token, tokenList } from '../utils/tokenList'
 import { Listbox, Transition } from '@headlessui/react'
@@ -19,7 +18,8 @@ import { ROUTER02_CONTRACT_ADDRESS } from '../utils/constants'
 import { useWeb3Modal } from '@web3modal/wagmi/react'
 import { waitForTransactionReceipt } from 'viem/public'
 import toast from 'react-hot-toast'
-import { getSwapParams } from '../utils/swap'
+import { getExecutionPriceExactOut, getSwapParamsExactOut } from '../utils/swap'
+import { useTokenBalances } from '../hooks/useTokenBalances'
 
 const CheckmarkIcon = (props: SVGProps<SVGSVGElement>) => (
   <svg
@@ -76,24 +76,13 @@ function SendTab() {
   const { open } = useWeb3Modal()
   const { address, isConnected } = useAccount()
   const publicClient = usePublicClient()
+  const { data: walletClient } = useWalletClient()
 
   const [cameraEnabled, setCameraEnabled] = useState(false)
   const [qrData, setQrData] = useState<QrDataInterface>()
   const [selectedToken, setSelectedToken] = useState(tokenList[0])
 
-  const { data: tokenBalances } = useContractReads({
-    contracts: tokenList.map(
-      (token) =>
-        ({
-          address: token.address as `0x${string}`,
-          abi: erc20ABI,
-          functionName: 'balanceOf',
-          args: [address!],
-        } as const)
-    ),
-    enabled: !!address,
-    watch: true,
-  })
+  const tokenBalances = useTokenBalances()
 
   const { data: receiverEnsName } = useEnsName({
     address: qrData?.receiver,
@@ -101,38 +90,20 @@ function SendTab() {
     enabled: !!qrData,
   })
 
-  const { writeAsync: swapAndTransfer } = useContractWrite({
-    address: ROUTER02_CONTRACT_ADDRESS,
-    abi: router02Abi,
-    functionName: 'swapTokensForExactTokens',
-    account: address,
-  })
-
-  const { writeAsync: transfer } = useContractWrite({
-    address: selectedToken.address as `0x${string}`,
-    abi: erc20ABI,
-    functionName: 'transfer',
-    account: address,
-  })
-
-  const { writeAsync: approve } = useContractWrite({
-    address: selectedToken.address as `0x${string}`,
-    abi: erc20ABI,
-    functionName: 'approve',
-    account: address,
-  })
-
   const handlePay = async () => {
-    if (!qrData || !address) return
+    if (!qrData || !address || !walletClient) return
 
     const transferAmount = parseUnits(qrData.amount, qrData.token.decimals)
 
     if (qrData.token.address === selectedToken.address) {
-      const transferTx = await transfer({
+      const transferTx = await walletClient.writeContract({
+        address: selectedToken.address,
+        abi: erc20ABI,
+        functionName: 'transfer',
         args: [qrData.receiver, transferAmount],
       })
       toast.promise(
-        waitForTransactionReceipt(publicClient, { hash: transferTx.hash }),
+        waitForTransactionReceipt(publicClient, { hash: transferTx }),
         {
           error: `Failed to pay ${qrData.amount} ${qrData.token.symbol} to ${
             receiverEnsName ?? truncate(qrData.receiver, 14, '...')
@@ -148,7 +119,15 @@ function SendTab() {
         }
       )
     } else {
-      const swapParams = await getSwapParams(
+      console.log(
+        await getExecutionPriceExactOut(
+          selectedToken,
+          qrData.token,
+          transferAmount,
+          publicClient
+        )
+      )
+      const swapParams = await getSwapParamsExactOut(
         selectedToken,
         qrData.token,
         transferAmount,
@@ -161,42 +140,41 @@ function SendTab() {
       )
 
       const allowance = await publicClient.readContract({
-        address: selectedToken.address as `0x${string}`,
+        address: selectedToken.address,
         abi: erc20ABI,
         functionName: 'allowance',
         args: [address, ROUTER02_CONTRACT_ADDRESS],
       })
 
       if (allowance < transferAmount) {
-        const approveTx = await approve({
+        const approveTx = await walletClient.writeContract({
+          address: selectedToken.address,
+          abi: erc20ABI,
+          functionName: 'approve',
           args: [ROUTER02_CONTRACT_ADDRESS, transferAmount],
         })
         toast.promise(
-          waitForTransactionReceipt(publicClient, { hash: approveTx.hash }),
+          waitForTransactionReceipt(publicClient, { hash: approveTx }),
           {
             error: `Approval failed`,
-            loading: `Approving ${qrData.token.symbol}`,
-            success: `Approved ${qrData.token.symbol}`,
+            loading: `Approving ${qrData.amount} ${qrData.token.symbol}`,
+            success: `Approved ${qrData.amount} ${qrData.token.symbol}`,
           }
         )
       }
 
-      const swapAndTransferTx = await swapAndTransfer({
+      const swapAndTransferTx = await walletClient.writeContract({
+        address: ROUTER02_CONTRACT_ADDRESS,
+        abi: router02Abi,
+        functionName: 'swapTokensForExactTokens',
+        account: address,
         args: swapParams,
       })
       toast.promise(
-        waitForTransactionReceipt(publicClient, {
-          hash: swapAndTransferTx.hash,
-        }),
+        waitForTransactionReceipt(publicClient, { hash: swapAndTransferTx }),
         {
-          error: `Failed to pay ${
-            receiverEnsName ?? truncate(qrData.receiver, 14, '...')
-          }, ${qrData.amount} ${qrData.token.symbol}`,
-          loading: `Paying ${
-            receiverEnsName ?? truncate(qrData.receiver, 14, '...')
-          }, ${qrData.amount} ${qrData.token.symbol} with ${
-            selectedToken.symbol
-          }`,
+          error: `Payment failed`,
+          loading: `Payment in progress`,
           success: `Paid ${
             receiverEnsName ?? truncate(qrData.receiver, 14, '...')
           }, ${qrData.amount} ${qrData.token.symbol} with ${

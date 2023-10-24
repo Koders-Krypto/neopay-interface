@@ -1,40 +1,50 @@
 'use client'
+
 import {
   ChevronDownIcon,
   MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline'
 import Image from 'next/image'
-import { Fragment, useEffect, useState } from 'react'
+import { Fragment, useState } from 'react'
 import { Dialog, Transition } from '@headlessui/react'
 import { XMarkIcon } from '@heroicons/react/20/solid'
-import { tokenList } from '../utils/tokenList'
-import { formatUnits, parseUnits } from 'viem'
+import { Token, tokenList } from '../utils/tokenList'
+import { formatUnits } from 'viem'
+import { useTokenBalances } from '../hooks/useTokenBalances'
 
-export default function SelectChain(props: any) {
-  const [selected, setSelected] = useState(props.select)
-  const [other, setOther] = useState(props.other)
+type Props = {
+  selectionToken: Token | undefined
+  setSelectionToken: React.Dispatch<React.SetStateAction<Token | undefined>>
+  setSelectionIndex: React.Dispatch<React.SetStateAction<number>>
+  otherToken: Token | undefined
+}
+
+export default function SelectChain({
+  otherToken,
+  selectionToken,
+  setSelectionIndex,
+  setSelectionToken,
+}: Props) {
   const [isOpen, setIsOpen] = useState(false)
 
-  useEffect(() => {
-    setSelected(props.select)
-    setOther(props.other)
-  }, [props])
+  const tokenBalances = useTokenBalances()
+
   return (
     <>
-      {selected?.address ? (
+      {selectionToken?.address ? (
         <div
           className="flex flex-row items-center justify-between gap-1 px-2 py-1 text-center rounded-full shadow-md cursor-default bg-primary"
           onClick={() => setIsOpen(true)}
         >
           <div className="flex items-center justify-center w-5 h-5 bg-white rounded-full">
             <Image
-              src={selected.logoURI}
-              alt={selected.name}
+              src={selectionToken.logoURI}
+              alt={selectionToken.name}
               height={'15'}
               width={'15'}
             />
           </div>
-          <span>{selected.symbol}</span>
+          <span>{selectionToken.symbol}</span>
           <div className="w-4 h-4">
             <ChevronDownIcon />
           </div>
@@ -83,15 +93,15 @@ export default function SelectChain(props: any) {
               </div>
               <div className="flex flex-col gap-4 pt-3 overflow-y-scroll border-t no-scrollbar border-white/20 h-96">
                 {tokenList.map(
-                  (token: any, i: number) =>
-                    token.address !== selected?.address &&
-                    token.address !== other?.address && (
+                  (token, i) =>
+                    token.address !== selectionToken?.address &&
+                    token.address !== otherToken?.address && (
                       <div
                         className="flex flex-row items-center justify-between px-2 py-1 rounded-lg cursor-pointer hover:bg-white/10"
                         key={i}
                         onClick={() => {
-                          props.index(i)
-                          props.tokenID(token)
+                          setSelectionToken(token)
+                          setSelectionIndex(i)
                           setIsOpen(false)
                         }}
                       >
@@ -110,11 +120,17 @@ export default function SelectChain(props: any) {
                           </div>
                         </div>
                         <div>
-                          {props?.balances && props.balances?.[i] && (
+                          {tokenBalances && tokenBalances?.[i] && (
                             <span>
-                              {formatUnits(
-                                props.balances?.[i].result,
-                                token.decimals
+                              {Intl.NumberFormat('en-US', {
+                                maximumFractionDigits: 2,
+                              }).format(
+                                parseFloat(
+                                  formatUnits(
+                                    tokenBalances[i].result as bigint,
+                                    tokenList[i].decimals
+                                  )
+                                )
                               )}
                             </span>
                           )}
@@ -123,8 +139,6 @@ export default function SelectChain(props: any) {
                     )
                 )}
               </div>
-
-              {/* ... */}
             </Dialog.Panel>
           </div>
         </Dialog>
