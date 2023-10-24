@@ -4,6 +4,7 @@ import {
   getAddress,
   getContractAddress,
   keccak256,
+  parseUnits,
 } from 'viem'
 import { FACTORY_ADDRESS, INIT_CODE_HASH } from './constants'
 import { v2PairAbi } from '../assets/abi/v2PairAbi'
@@ -65,7 +66,74 @@ const fetchPairData = async (
   return balances
 }
 
-export const getSwapParams = async (
+export const getExecutionPriceExactIn = async (
+  tokenA: Token,
+  tokenB: Token,
+  inputAmount: bigint,
+  publicClient: PublicClient
+) => {
+  const reserves = await fetchPairData(tokenA, tokenB, publicClient)
+  let inputReserve = reserves[0]
+  let outputReserve = reserves[1]
+
+  const outputAmount =
+    (inputAmount * BigInt(997) * outputReserve) /
+    (inputReserve * BigInt(1000) + inputAmount * BigInt(997))
+
+  return (
+    (parseUnits(outputAmount.toString(), tokenA.decimals) *
+      parseUnits('1', tokenB.decimals)) /
+    parseUnits(inputAmount.toString(), tokenB.decimals)
+  )
+}
+
+export const getExecutionPriceExactOut = async (
+  tokenA: Token,
+  tokenB: Token,
+  outputAmount: bigint,
+  publicClient: PublicClient
+) => {
+  const reserves = await fetchPairData(tokenA, tokenB, publicClient)
+  let inputReserve = reserves[0]
+  let outputReserve = reserves[1]
+
+  const inputAmount =
+    (inputReserve * outputAmount * BigInt(1000)) /
+      ((outputReserve - outputAmount) * BigInt(997)) +
+    BigInt(1)
+
+  return (
+    (parseUnits(inputAmount.toString(), tokenB.decimals) *
+      parseUnits('1', tokenA.decimals)) /
+    parseUnits(outputAmount.toString(), tokenA.decimals)
+  )
+}
+
+export const getSwapParamsExactIn = async (
+  tokenA: Token,
+  tokenB: Token,
+  inputAmount: bigint,
+  publicClient: PublicClient,
+  options: { recipient: `0x${string}`; ttl: number; allowedSlippage: bigint }
+): Promise<[bigint, bigint, `0x${string}`[], `0x${string}`, bigint]> => {
+  const to = getAddress(options.recipient)
+  const reserves = await fetchPairData(tokenA, tokenB, publicClient)
+
+  let inputReserve = reserves[0]
+  let outputReserve = reserves[1]
+
+  const outputAmount =
+    (inputAmount * BigInt(997) * outputReserve) /
+    (inputReserve * BigInt(1000) + inputAmount * BigInt(997))
+  const slippageAdjustedAmountOut =
+    (options.allowedSlippage * outputAmount) / BigInt(100)
+  const path = [tokenA.address, tokenB.address]
+  const deadline = BigInt(Math.floor(new Date().getTime() / 1000) + options.ttl)
+
+  return [inputAmount, slippageAdjustedAmountOut, path, to, deadline]
+}
+
+export const getSwapParamsExactOut = async (
   tokenA: Token,
   tokenB: Token,
   outputAmount: bigint,

@@ -1,9 +1,11 @@
 'use client'
 
 import { Tab } from '@headlessui/react'
-import { Fragment, SVGProps } from 'react'
+import { Fragment, SVGProps, useState } from 'react'
 import ReceiveTab from '../../components/ReceiveTab'
 import SendTab from '../../components/SendTab'
+import Dex from '../../components/Dex'
+import { ArrowsRightLeftIcon } from '@heroicons/react/20/solid'
 
 const CameraIcon = (props: SVGProps<SVGSVGElement>) => (
   <svg
@@ -47,12 +49,12 @@ const QrIcon = (props: SVGProps<SVGSVGElement>) => (
 
 export default function Page() {
   return (
-    <div className="min-h-screen flex items-center justify-center">
+    <div className="flex flex-col items-center justify-center min-h-screen gap-4">
       <Tab.Group
         as="div"
-        className="bg-black/60 rounded-xl shadow-md text-white p-6 max-w-sm w-full"
+        className="w-full max-w-md p-6 text-white shadow-md bg-black/60 rounded-xl"
       >
-        <Tab.List className="bg-black/50 rounded-lg p-1 flex mb-4">
+        <Tab.List className="flex p-1 mb-4 rounded-lg bg-black/50">
           <Tab as={Fragment}>
             {({ selected }) => (
               <button
@@ -85,6 +87,22 @@ export default function Page() {
               </button>
             )}
           </Tab>
+          <Tab as={Fragment}>
+            {({ selected }) => (
+              <button
+                className={`flex-1 px-4 py-1.5 rounded-md shadow-md focus:outline-none flex items-center justify-center gap-2 ${
+                  selected ? 'bg-primary' : 'bg-transparent'
+                }`}
+              >
+                <ArrowsRightLeftIcon
+                  strokeWidth={0}
+                  stroke="currentColor"
+                  className="w-6 h-6"
+                />
+                Swap
+              </button>
+            )}
+          </Tab>
         </Tab.List>
         <Tab.Panels>
           <Tab.Panel>
@@ -92,6 +110,9 @@ export default function Page() {
           </Tab.Panel>
           <Tab.Panel>
             <ReceiveTab />
+          </Tab.Panel>
+          <Tab.Panel>
+            <Dex />
           </Tab.Panel>
         </Tab.Panels>
       </Tab.Group>

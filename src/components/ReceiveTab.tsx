@@ -1,6 +1,6 @@
 import React, { Fragment, SVGProps, useCallback, useRef, useState } from 'react'
 import QRCode from 'react-qr-code'
-import { erc20ABI, useAccount, useContractReads } from 'wagmi'
+import { useAccount } from 'wagmi'
 import { Token, tokenList } from '../utils/tokenList'
 import { Listbox, Transition } from '@headlessui/react'
 import Image from 'next/image'
@@ -8,6 +8,7 @@ import { CheckIcon, ChevronUpDownIcon } from '@heroicons/react/20/solid'
 import { useWeb3Modal } from '@web3modal/wagmi/react'
 import { toPng } from 'html-to-image'
 import { formatUnits } from 'viem'
+import { useTokenBalances } from '../hooks/useTokenBalances'
 
 const DownloadIcon = (props: SVGProps<SVGSVGElement>) => (
   <svg
@@ -40,19 +41,7 @@ function ReceiveTab() {
 
   const qrRef = useRef<HTMLDivElement>(null)
 
-  const { data: tokenBalances } = useContractReads({
-    contracts: tokenList.map(
-      (token) =>
-        ({
-          address: token.address as `0x${string}`,
-          abi: erc20ABI,
-          functionName: 'balanceOf',
-          args: [address!],
-        } as const)
-    ),
-    enabled: !!address,
-    watch: true,
-  })
+  const tokenBalances = useTokenBalances()
 
   const generateQr = () => {
     if (!address) return

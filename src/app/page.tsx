@@ -6,20 +6,22 @@ import SendIcon from '../assets/icons/send.svg'
 import SendButtonIcon from '../assets/icons/button-send.svg'
 import QrIcon from '../assets/icons/qr.svg'
 import QrButtonIcon from '../assets/icons/button-qr.svg'
+import Typing from '../components/Typing'
 
 export default function Page() {
   return (
     <>
       <main className="flex flex-col-reverse items-center justify-center min-h-screen gap-12 md:flex-row md:justify-between">
         <div className="self-start ml-4 space-y-6 md:ml-0 md:self-auto">
-          <h1 className="text-5xl font-bold leading-none text-white uppercase md:text-7xl">
-            Neopay
-          </h1>
-          <h2 className="text-3xl md:text-5xl font-bold uppercase text-white leading-tight max-w-[20rem] md:max-w-2xl">
-            Simply scan the{' '}
-            <span className="underline decoration-primary">QR code</span> and
-            pay with{' '}
-            <span className="underline decoration-primary">Any Token</span>
+          <div className="flex flex-row gap-4 text-5xl font-bold leading-none uppercase md:text-7xl text-primary">
+            <h1>Neopay -</h1>
+            <Typing />
+          </div>
+          <h2 className="text-2xl font-bold leading-tight text-white uppercase md:text-3xl">
+            Innovative Payment Solution Tailored for the{' '}
+            <span className="underline decoration-primary">
+              NEO Smart Economy
+            </span>
           </h2>
           <div className="flex items-center gap-4 md:gap-6">
             <Link
