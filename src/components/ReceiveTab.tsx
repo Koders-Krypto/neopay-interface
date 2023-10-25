@@ -55,20 +55,6 @@ function ReceiveTab() {
 
   const tokenBalances = useTokenBalances()
 
-  const testcontractevents = async () => {
-    const outgoingLogs = await publicClient.getContractEvents({
-      address: tokenList.map((token) => token.address),
-      abi: erc20ABI,
-      eventName: 'Transfer',
-      args: {
-        from: address,
-      },
-      fromBlock: blockNumber && blockNumber - BigInt(1000),
-      toBlock: blockNumber,
-    })
-    console.log(outgoingLogs)
-  }
-
   const generateQr = () => {
     if (!address) return
     setQrData({
@@ -259,7 +245,7 @@ function ReceiveTab() {
               className={`mt-6 w-full  rounded-md shadow-sm py-2.5 text-white ${
                 !amount ? 'bg-gray-300' : 'bg-primary'
               }`}
-              onClick={testcontractevents}
+              onClick={generateQr}
             >
               Generate QR
             </button>
