@@ -1,12 +1,6 @@
 import React, { Fragment, SVGProps, useCallback, useRef, useState } from 'react'
 import QRCode from 'react-qr-code'
-import {
-  erc20ABI,
-  useAccount,
-  useBlockNumber,
-  useNetwork,
-  usePublicClient,
-} from 'wagmi'
+import { erc20ABI, useAccount, useNetwork, usePublicClient } from 'wagmi'
 import { Token, tokenList } from '../utils/tokenList'
 import { Listbox, Transition } from '@headlessui/react'
 import Image from 'next/image'
@@ -45,7 +39,6 @@ function ReceiveTab() {
   const { open } = useWeb3Modal()
   const publicClient = usePublicClient()
   const { chain } = useNetwork()
-  const { data: blockNumber } = useBlockNumber()
 
   const [token, setToken] = useState(tokenList[0])
   const [amount, setAmount] = useState<`${number}`>('10')
@@ -85,7 +78,7 @@ function ReceiveTab() {
                   <a
                     className="flex items-center gap-2"
                     target="_blank"
-                    href={`${chain?.blockExplorers?.default.url}/${log.transactionHash}`}
+                    href={`${chain?.blockExplorers?.default.url}/tx/${log.transactionHash}`}
                   >
                     <span className="font-light underline">
                       View on explorer

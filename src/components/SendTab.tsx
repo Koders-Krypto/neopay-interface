@@ -127,7 +127,7 @@ function SendTab() {
               <a
                 className="flex items-center gap-2"
                 target="_blank"
-                href={`${chain?.blockExplorers?.default.url}/${transferTx}`}
+                href={`${chain?.blockExplorers?.default.url}/tx/${transferTx}`}
               >
                 <span className="font-light underline">View on explorer</span>
                 <ArrowTopRightOnSquareIcon className="h-4 w-4" />
@@ -176,7 +176,7 @@ function SendTab() {
                 <a
                   className="flex items-center gap-2"
                   target="_blank"
-                  href={`${chain?.blockExplorers?.default.url}/${approveTx}`}
+                  href={`${chain?.blockExplorers?.default.url}/tx/${approveTx}`}
                 >
                   <span className="font-light underline">View on explorer</span>
                   <ArrowTopRightOnSquareIcon className="h-4 w-4" />
@@ -211,7 +211,7 @@ function SendTab() {
               <a
                 className="flex items-center gap-2"
                 target="_blank"
-                href={`${chain?.blockExplorers?.default.url}/${swapAndTransferTx}`}
+                href={`${chain?.blockExplorers?.default.url}/tx/${swapAndTransferTx}`}
               >
                 <span className="font-light underline">View on explorer</span>
                 <ArrowTopRightOnSquareIcon className="h-4 w-4" />
