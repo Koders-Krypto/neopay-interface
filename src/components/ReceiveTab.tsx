@@ -1,6 +1,12 @@
 import React, { Fragment, SVGProps, useCallback, useRef, useState } from 'react'
 import QRCode from 'react-qr-code'
-import { erc20ABI, useAccount, useNetwork, usePublicClient } from 'wagmi'
+import {
+  erc20ABI,
+  useAccount,
+  useBlockNumber,
+  useNetwork,
+  usePublicClient,
+} from 'wagmi'
 import { Token, tokenList } from '../utils/tokenList'
 import { Listbox, Transition } from '@headlessui/react'
 import Image from 'next/image'
@@ -9,8 +15,6 @@ import { useWeb3Modal } from '@web3modal/wagmi/react'
 import { toPng } from 'html-to-image'
 import { formatUnits, parseUnits } from 'viem'
 import { useTokenBalances } from '../hooks/useTokenBalances'
-import { pools } from '../utils/constants'
-import { v2PairAbi } from '../assets/abi/v2PairAbi'
 import toast from 'react-hot-toast'
 import truncate from '../utils/truncate'
 import { ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline'
@@ -41,6 +45,7 @@ function ReceiveTab() {
   const { open } = useWeb3Modal()
   const publicClient = usePublicClient()
   const { chain } = useNetwork()
+  const { data: blockNumber } = useBlockNumber()
 
   const [token, setToken] = useState(tokenList[0])
   const [amount, setAmount] = useState<`${number}`>('10')
@@ -49,6 +54,20 @@ function ReceiveTab() {
   const qrRef = useRef<HTMLDivElement>(null)
 
   const tokenBalances = useTokenBalances()
+
+  const testcontractevents = async () => {
+    const outgoingLogs = await publicClient.getContractEvents({
+      address: tokenList.map((token) => token.address),
+      abi: erc20ABI,
+      eventName: 'Transfer',
+      args: {
+        from: address,
+      },
+      fromBlock: blockNumber && blockNumber - BigInt(1000),
+      toBlock: blockNumber,
+    })
+    console.log(outgoingLogs)
+  }
 
   const generateQr = () => {
     if (!address) return
@@ -66,80 +85,34 @@ function ReceiveTab() {
       onLogs: (logs) => {
         logs.forEach((log) => {
           if (log.eventName === 'Transfer') {
-            if (log.args.to !== log.args.from) {
-              const amountToReceive = parseUnits(amount, token.decimals)
-              if (log.args.value === amountToReceive) {
-                toast.success(
-                  <div>
-                    <span>
-                      {`Recieved ${amount} ${token.symbol} from ${truncate(
-                        log.args.from,
-                        14,
-                        '...'
-                      )}`}
+            const amountToReceive = parseUnits(amount, token.decimals)
+            if (log.args.value === amountToReceive) {
+              toast.success(
+                <div>
+                  <span>
+                    {`Recieved ${amount} ${token.symbol} from ${truncate(
+                      log.args.from,
+                      14,
+                      '...'
+                    )}`}
+                  </span>
+                  <a
+                    className="flex items-center gap-2"
+                    target="_blank"
+                    href={`${chain?.blockExplorers?.default.url}/${log.transactionHash}`}
+                  >
+                    <span className="font-light underline">
+                      View on explorer
                     </span>
-                    <a
-                      className="flex items-center gap-2"
-                      target="_blank"
-                      href={`${chain?.blockExplorers?.default.url}/${log.transactionHash}`}
-                    >
-                      <span className="font-light underline">
-                        View on explorer
-                      </span>
-                      <ArrowTopRightOnSquareIcon className="h-4 w-4" />
-                    </a>
-                  </div>
-                )
-                unwatch()
-              }
+                    <ArrowTopRightOnSquareIcon className="h-4 w-4" />
+                  </a>
+                </div>
+              )
+              unwatch()
             }
           }
         })
       },
-    })
-    pools.map((pool) => {
-      const unwatch = publicClient.watchContractEvent({
-        address: pool,
-        abi: v2PairAbi,
-        eventName: 'Swap',
-        args: { to: address },
-        onLogs: (logs) => {
-          logs.forEach((log) => {
-            if (log.eventName === 'Swap') {
-              if (log.args.to !== log.args.sender) {
-                const amountToReceive = parseUnits(amount, token.decimals)
-                if (
-                  log.args.amount0Out === amountToReceive ||
-                  log.args.amount1Out === amountToReceive
-                ) {
-                  toast.success(
-                    <div>
-                      <span>
-                        {`Recieved ${amount} ${token.symbol} from ${truncate(
-                          log.args.sender,
-                          14,
-                          '...'
-                        )}`}
-                      </span>
-                      <a
-                        className="flex items-center gap-2"
-                        target="_blank"
-                        href={`${chain?.blockExplorers?.default.url}/${log.transactionHash}`}
-                      >
-                        <span className="font-light underline">
-                          View on explorer
-                        </span>
-                        <ArrowTopRightOnSquareIcon className="h-4 w-4" />
-                      </a>
-                    </div>
-                  )
-                  unwatch()
-                }
-              }
-            }
-          })
-        },
-      })
     })
   }
 
@@ -286,7 +259,7 @@ function ReceiveTab() {
               className={`mt-6 w-full  rounded-md shadow-sm py-2.5 text-white ${
                 !amount ? 'bg-gray-300' : 'bg-primary'
               }`}
-              onClick={generateQr}
+              onClick={testcontractevents}
             >
               Generate QR
             </button>
