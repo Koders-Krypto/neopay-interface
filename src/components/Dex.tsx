@@ -16,6 +16,7 @@ import { ROUTER02_CONTRACT_ADDRESS } from '../utils/constants'
 import { router02Abi } from '../assets/abi/router02Abi'
 import { waitForTransaction } from '@wagmi/core'
 import toast from 'react-hot-toast'
+import LoadingIcon from './LoadingIcon'
 
 enum TradeType {
   EXACT_INPUT = 'swapExactTokensForTokens',
@@ -36,6 +37,7 @@ function Dex() {
   const [indexB, setIndexB] = useState<number>(-1)
   const [amountB, setAmountB] = useState('0')
   const [tradeType, setTradeType] = useState<TradeType>(TradeType.EXACT_INPUT)
+  const [swap, setSwap] = useState(false)
 
   const inverseToken = () => {
     setTokenA(tokenB)
@@ -86,7 +88,7 @@ function Dex() {
 
   const handleSwap = async () => {
     if (!tokenA || !tokenB || !amountA || !address || !walletClient) return
-
+    setSwap(true)
     const swapConfig = {
       allowedSlippage: BigInt(100),
       recipient: address,
@@ -127,7 +129,7 @@ function Dex() {
           functionName: 'approve',
           args: [ROUTER02_CONTRACT_ADDRESS, inputAmount],
         })
-        toast.promise(waitForTransaction({ hash: approveTx }), {
+        await toast.promise(waitForTransaction({ hash: approveTx }), {
           error: `Approval failed`,
           loading: `Approving ${amountA} ${tokenA.symbol}`,
           success: `Approved ${amountA} ${tokenA.symbol}`,
@@ -140,7 +142,7 @@ function Dex() {
         functionName: tradeType,
         args: swapParams,
       })
-      toast.promise(waitForTransaction({ hash: swapTx }), {
+      await toast.promise(waitForTransaction({ hash: swapTx }), {
         error: `Swap failed`,
         loading: `Swapping ${amountA} ${tokenA.symbol} for ${amountB} ${tokenB.symbol}`,
         success: `Swapped ${amountA} ${tokenA.symbol} for ${amountB} ${tokenB.symbol}`,
@@ -148,6 +150,7 @@ function Dex() {
     } catch (error) {
       console.log('swap failed =>', error)
     }
+    setSwap(false)
   }
 
   return (
@@ -185,7 +188,7 @@ function Dex() {
                 />
               </div>
 
-              {tokenBalances && tokenBalances?.[indexA] && (
+              {tokenBalances && tokenBalances?.[indexA] ? (
                 <h5 className="self-end text-xs">
                   Balance:{' '}
                   <span>
@@ -214,6 +217,8 @@ function Dex() {
                     Max
                   </button>
                 </h5>
+              ) : (
+                <span className="invisible text-xs">0</span>
               )}
             </div>
           </div>
@@ -255,7 +260,7 @@ function Dex() {
                 />
               </div>
 
-              {tokenBalances && tokenBalances?.[indexB] && (
+              {tokenBalances && tokenBalances?.[indexB] ? (
                 <h5 className="self-end text-xs">
                   Balance:{' '}
                   <span>
@@ -284,19 +289,27 @@ function Dex() {
                     Max
                   </button>
                 </h5>
+              ) : (
+                <span className="invisible text-xs">0</span>
               )}
             </div>
           </div>
         </div>
         {isConnected ? (
           <button
-            disabled={!amountA || !amountB}
+            disabled={!amountA || !amountB || swap}
             className={`w-full  rounded-lg shadow-sm py-3 text-white text-lg ${
               !amountA || !amountB ? 'bg-black/60' : 'bg-primary'
             }`}
             onClick={handleSwap}
           >
-            Swap
+            {swap ? (
+              <span className="flex flex-row items-center justify-center gap-2">
+                <LoadingIcon className="w-5 h-5 animate-spin" />
+              </span>
+            ) : (
+              'Swap'
+            )}
           </button>
         ) : (
           <button

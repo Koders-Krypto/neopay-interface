@@ -106,7 +106,7 @@ function SendTab() {
         functionName: 'transfer',
         args: [qrData.receiver, transferAmount],
       })
-      toast.promise(
+      await toast.promise(
         waitForTransactionReceipt(publicClient, { hash: transferTx }),
         {
           error: `Failed to pay ${qrData.amount} ${qrData.token.symbol} to ${
@@ -130,7 +130,7 @@ function SendTab() {
                 href={`${chain?.blockExplorers?.default.url}/tx/${transferTx}`}
               >
                 <span className="font-light underline">View on explorer</span>
-                <ArrowTopRightOnSquareIcon className="h-4 w-4" />
+                <ArrowTopRightOnSquareIcon className="w-4 h-4" />
               </a>
             </div>
           ),
@@ -163,7 +163,7 @@ function SendTab() {
           functionName: 'approve',
           args: [ROUTER02_CONTRACT_ADDRESS, transferAmount],
         })
-        toast.promise(
+        await toast.promise(
           waitForTransactionReceipt(publicClient, { hash: approveTx }),
           {
             error: `Approval failed`,
@@ -179,7 +179,7 @@ function SendTab() {
                   href={`${chain?.blockExplorers?.default.url}/tx/${approveTx}`}
                 >
                   <span className="font-light underline">View on explorer</span>
-                  <ArrowTopRightOnSquareIcon className="h-4 w-4" />
+                  <ArrowTopRightOnSquareIcon className="w-4 h-4" />
                 </a>
               </div>
             ),
@@ -194,7 +194,7 @@ function SendTab() {
         account: address,
         args: swapParams,
       })
-      toast.promise(
+      await toast.promise(
         waitForTransactionReceipt(publicClient, { hash: swapAndTransferTx }),
         {
           error: `Payment failed`,
@@ -214,7 +214,7 @@ function SendTab() {
                 href={`${chain?.blockExplorers?.default.url}/tx/${swapAndTransferTx}`}
               >
                 <span className="font-light underline">View on explorer</span>
-                <ArrowTopRightOnSquareIcon className="h-4 w-4" />
+                <ArrowTopRightOnSquareIcon className="w-4 h-4" />
               </a>
             </div>
           ),
