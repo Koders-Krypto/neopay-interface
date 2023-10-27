@@ -14,28 +14,28 @@ export interface Token {
 export const tokenList: Token[] = [
   {
     logoURI: EthereumLogo,
-    address: '0x2aCB7bfB8D91E998C33B90D5C3980fe9A2c9dF2d',
+    address: '0xbD3eB6b39CcC68dE73b9d0951432bF29d5ABF0ad',
     name: 'Wrapped Ether',
     symbol: 'WETH',
     decimals: 18,
   },
   {
     logoURI: UsdCoinLogo,
-    address: '0xD0d4C08136877F7E25A355900B20100fBF19562A',
+    address: '0xFA4aBB6EC55CA20Fda79F7D50dE9aC58C932fa86',
     name: 'USDCoin',
     symbol: 'USDC',
     decimals: 6,
   },
   {
     logoURI: DaiLogo,
-    address: '0x43B0f98ED4f1f008375882934f35b2620E8aE0a1',
+    address: '0x5A4B8d5337C4d6440c3aB74828Cea0fB0CE306d4',
     name: 'Dai Stablecoin',
     symbol: 'DAI',
     decimals: 18,
   },
   {
     logoURI: ChainlinkLogo,
-    address: '0x6Edfe03bA366C1A6b571Ac583fa4E4500b682C3f',
+    address: '0x853fa1a0DFBF47257eF01F7033eAB8192e406087',
     name: 'ChainLink Token',
     symbol: 'LINK',
     decimals: 18,
